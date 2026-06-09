@@ -1,3 +1,3 @@
-﻿<template>
-  <div>{{ 'ProfileSettingsView' }} - 준비 중</div>
+<template>
+  <div>ProfileSettingsView</div>
 </template>

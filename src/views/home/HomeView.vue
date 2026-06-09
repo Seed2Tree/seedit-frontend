@@ -1,3 +1,3 @@
-﻿<template>
-  <div>{{ 'HomeView' }} - 준비 중</div>
+<template>
+  <div>HomeView</div>
 </template>

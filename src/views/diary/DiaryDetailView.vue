@@ -1,3 +1,3 @@
 <template>
-  <div>DiaryDetailView - {{ $route.params.diaryId }}</div>
+  <div>JournalDetailView - {{ $route.params.id }}</div>
 </template>

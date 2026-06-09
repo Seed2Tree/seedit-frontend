@@ -1,20 +1,28 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { authApi } from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-  // TODO: 로그인 구현 전까지 true로 고정 (개발용)
-  const isLoggedIn = ref(true)
+  const accessToken = ref(localStorage.getItem('accessToken') || null)
   const user = ref(null)
 
-  function login(userData) {
-    isLoggedIn.value = true
-    user.value = userData
+  const isLoggedIn = computed(() => !!accessToken.value)
+
+  async function login(email, password) {
+    const res = await authApi.login(email, password)
+    // 백엔드 응답: { accessToken, refreshToken, tokenType, email }
+    // client.js 인터셉터가 res.data를 이미 벗겨줌
+    const { accessToken: token, email: userEmail } = res
+    accessToken.value = token
+    user.value = { email: userEmail }
+    localStorage.setItem('accessToken', token)
   }
 
   function logout() {
-    isLoggedIn.value = false
+    accessToken.value = null
     user.value = null
+    localStorage.removeItem('accessToken')
   }
 
-  return { isLoggedIn, user, login, logout }
+  return { accessToken, user, isLoggedIn, login, logout }
 })

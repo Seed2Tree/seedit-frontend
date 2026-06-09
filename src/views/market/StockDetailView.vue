@@ -127,7 +127,7 @@ const router = useRouter()
 const route = useRoute()
 const stocksStore = useStocksStore()
 
-const stockId = route.params.stockId
+const ticker = route.params.ticker
 const stock = ref(null)
 const prices = ref([])               // [{ date, close }]
 const isLoading = ref(false)
@@ -143,7 +143,7 @@ const periods = [
 ]
 
 // 관심종목 여부
-const isWatched = computed(() => stocksStore.isWatched(stockId))
+const isWatched = computed(() => stocksStore.isWatched(ticker))
 
 // 차트 색상: 상승 빨강 / 하락 파랑 (한국 주식 관례)
 const lineColor = computed(() =>
@@ -190,8 +190,8 @@ async function loadData() {
   error.value = false
   try {
     const [detailRes, pricesRes] = await Promise.all([
-      stocksApi.getDetail(stockId),
-      stocksApi.getPrices(stockId, selectedPeriod.value),
+      stocksApi.getDetail(ticker),
+      stocksApi.getPrices(ticker, selectedPeriod.value),
     ])
     stock.value = detailRes.data
     prices.value = pricesRes.data
@@ -205,7 +205,7 @@ async function loadData() {
 async function onPeriodChange(period) {
   selectedPeriod.value = period
   try {
-    const res = await stocksApi.getPrices(stockId, period)
+    const res = await stocksApi.getPrices(ticker, period)
     prices.value = res.data
   } catch (e) {
     // 차트 데이터만 실패 시 기존 유지
@@ -213,15 +213,15 @@ async function onPeriodChange(period) {
 }
 
 function onToggleWatchlist() {
-  stocksStore.toggleWatchlist(stockId)
+  stocksStore.toggleWatchlist(ticker)
 }
 
 function goBuy() {
-  router.push({ name: 'stock-buy', params: { stockId } })
+  router.push({ name: 'stock-buy', params: { ticker } })
 }
 
 function goSell() {
-  router.push({ name: 'stock-sell', params: { stockId } })
+  router.push({ name: 'stock-sell', params: { ticker } })
 }
 
 function formatPrice(price) {

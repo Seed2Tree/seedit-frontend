@@ -140,7 +140,7 @@ function onSearch() {
 }
 
 function goDetail(stock) {
-  router.push({ name: 'stock-detail', params: { stockId: stock.sid } })
+  router.push({ name: 'stock-detail', params: { ticker: stock.ticker } })
 }
 
 function formatPrice(price) {

@@ -59,7 +59,7 @@ const router = createRouter({
         },
         {
           // F06: 보유 종목 개별 상세 (StockDetailView 재사용)
-          path: 'home/portfolio/:stockId',
+          path: 'home/portfolio/:ticker',
           name: 'portfolio-detail',
           component: () => import('@/views/market/StockDetailView.vue'),
         },
@@ -85,25 +85,25 @@ const router = createRouter({
         // ── 투자종목 탭 ───────────────────────────────────
         {
           // F01: 종목 목록 + 검색 + 관심종목 필터
-          path: 'stocks',
-          name: 'stocks',
-          component: () => import('@/views/market/StocksView.vue'),
+          path: 'market',
+          name: 'market',
+          component: () => import('@/views/market/MarketView.vue'),
         },
         {
           // F01: 종목 상세 (차트, 현재가, 관심종목 토글 F07)
-          path: 'stocks/:stockId',
+          path: 'market/:ticker',
           name: 'stock-detail',
           component: () => import('@/views/market/StockDetailView.vue'),
         },
         {
           // F02 + F03: 모의 매수 + 투자 가설 작성
-          path: 'stocks/:stockId/buy',
+          path: 'market/:ticker/buy',
           name: 'stock-buy',
           component: () => import('@/views/market/StockBuyView.vue'),
         },
         {
           // F04 + F05: 모의 매도 + 투자 복기
-          path: 'stocks/:stockId/sell',
+          path: 'market/:ticker/sell',
           name: 'stock-sell',
           component: () => import('@/views/market/StockSellView.vue'),
         },
@@ -118,7 +118,7 @@ const router = createRouter({
         {
           // F11 + F12 + F13: 일기 상세 조회 + 내용 수정 + AI 피드백
           // (매수/매도 시 자동 생성, 별도 작성 화면 없음)
-          path: 'diary/:diaryId',
+          path: 'diary/:id',
           name: 'diary-detail',
           component: () => import('@/views/diary/DiaryDetailView.vue'),
         },
@@ -138,7 +138,7 @@ const router = createRouter({
         },
         {
           // F31 + F32: 콘텐츠 상세 + 즐겨찾기
-          path: 'study/:studyId',
+          path: 'study/:id',
           name: 'study-detail',
           component: () => import('@/views/study/StudyDetailView.vue'),
         },

@@ -4,7 +4,7 @@
       <span class="tab-icon">📝</span>
       <span class="tab-label">투자일지</span>
     </RouterLink>
-    <RouterLink to="/stocks" class="tab-item">
+    <RouterLink to="/market" class="tab-item">
       <span class="tab-icon">📈</span>
       <span class="tab-label">투자종목</span>
     </RouterLink>
