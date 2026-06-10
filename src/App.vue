@@ -1,36 +1,6 @@
 <script setup>
-import client from '@/api/client'
-import { ref, onMounted } from 'vue'
-
-const status = ref('확인 중...')
-onMounted(async () => {
-  try {
-    const res = await client.get('/health')
-    status.value = res.success ? `백엔드 연결됨 (db: ${res.data.db})` : '응답 이상'
-  } catch {
-    status.value = '백엔드 연결 안됨'
-  }
-})
 </script>
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <div style="padding: 16px">
-          <h2>Seedit</h2>
-          <p>백엔드 상태: {{ status }}</p>
-          <RouterView />
-        </div>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
   <RouterView />
 </template>
 
