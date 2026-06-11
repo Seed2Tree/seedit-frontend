@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useHeaderStore } from '@/stores/header'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -29,6 +30,7 @@ const router = createRouter({
           path: 'signup',
           name: 'signup',
           component: () => import('@/views/SignupView.vue'),
+          meta: { header: { title: '회원가입', backMode: true } },
         },
         {
           path: 'signup/complete',
@@ -44,7 +46,6 @@ const router = createRouter({
       component: () => import('@/layouts/MainLayout.vue'),
       meta: { requiresAuth: true },
       children: [
-
         // ── 홈 탭 ─────────────────────────────────────────
         {
           path: 'home',
@@ -62,6 +63,7 @@ const router = createRouter({
           path: 'home/portfolio/:ticker',
           name: 'portfolio-detail',
           component: () => import('@/views/market/StockDetailView.vue'),
+          meta: { header: { title: '기업명', backMode: true, star: true } },
         },
         {
           // F24: 레벨/포인트/미션 (홈에서 진입)
@@ -94,18 +96,21 @@ const router = createRouter({
           path: 'market/:ticker',
           name: 'stock-detail',
           component: () => import('@/views/market/StockDetailView.vue'),
+          meta: { header: { title: '기업명', backMode: true, star: true } },
         },
         {
           // F02 + F03: 모의 매수 + 투자 가설 작성
           path: 'market/:ticker/buy',
           name: 'stock-buy',
           component: () => import('@/views/market/StockBuyView.vue'),
+          meta: { header: { title: '매수', backMode: true } },
         },
         {
           // F04 + F05: 모의 매도 + 투자 복기
           path: 'market/:ticker/sell',
           name: 'stock-sell',
           component: () => import('@/views/market/StockSellView.vue'),
+          meta: { header: { title: '매도', backMode: true } },
         },
 
         // ── 투자일지 탭 ───────────────────────────────────
@@ -154,6 +159,13 @@ const router = createRouter({
           path: 'mypage/settings',
           name: 'mypage-settings',
           component: () => import('@/views/profile/ProfileSettingsView.vue'),
+          meta: { header: { title: '내 정보 수정', backMode: true } },
+        },
+        {
+          path: 'mypage/password',
+          name: 'mypage-password',
+          component: () => import('@/views/profile/ChangePassword.vue'),
+          meta: { header: { title: '비밀번호 변경', backMode: true } },
         },
       ],
     },
@@ -163,10 +175,13 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const auth = useAuthStore()
-  if (to.meta.requiresAuth && !auth.isLoggedIn) {
-    return { name: 'login' }
-  }
+  const isAuth = !!localStorage.getItem('accessToken')
+  if (to.meta.requiresAuth && !isAuth) return { name: 'login' }
+  if (to.name === 'login' && isAuth) return { name: 'home' }
 })
-
+router.afterEach((to) => {
+  const headerStore = useHeaderStore()
+  headerStore.reset() // 기본값으로 리셋
+  headerStore.set(to.meta.header ?? {}) // 이 라우트의 header 적용
+})
 export default router
