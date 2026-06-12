@@ -1,7 +1,6 @@
 <template>
   <div class="login-page">
     <div class="login-inner">
-
       <!-- 로고 -->
       <div class="logo-wrap">
         <div class="logo-icon">🌱</div>
@@ -48,7 +47,6 @@
         계정이 없으신가요?
         <button class="link-btn" @click="router.push({ name: 'signup' })">회원가입</button>
       </div>
-
     </div>
   </div>
 </template>
@@ -57,9 +55,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { authApi } from '@/api/auth'
 
 const router = useRouter()
-const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
@@ -70,8 +68,16 @@ async function onSubmit() {
   isLoading.value = true
   errorMsg.value = ''
   try {
-    await authStore.login(email.value, password.value)
-    router.push({ name: 'market' })
+    const body = await authApi.login(email.value, password.value)
+    const token = body?.data?.accessToken
+    const user = body?.data?.user
+    if (token) {
+      localStorage.setItem('accessToken', token)
+    } else {
+      console.warn('accessToken을 응답에서 못 찾음, 응답 구조 확인 필요')
+    }
+    localStorage.setItem('user', JSON.stringify(user))
+    router.push('/home')
   } catch (e) {
     errorMsg.value = '이메일 또는 비밀번호를 확인해주세요.'
   } finally {
@@ -107,12 +113,12 @@ async function onSubmit() {
 .logo-title {
   font-size: 32px;
   font-weight: 800;
-  color: #1E1A2E;
+  color: #1e1a2e;
   letter-spacing: -0.03em;
 }
 .logo-sub {
   font-size: 14px;
-  color: #7A7388;
+  color: #7a7388;
   margin-top: 6px;
 }
 
@@ -130,7 +136,7 @@ async function onSubmit() {
 .label {
   font-size: 13px;
   font-weight: 600;
-  color: #4A4459;
+  color: #4a4459;
 }
 .input {
   height: 52px;
@@ -139,21 +145,21 @@ async function onSubmit() {
   background: white;
   padding: 0 16px;
   font-size: 15px;
-  color: #1E1A2E;
+  color: #1e1a2e;
   outline: none;
   transition: border-color 0.15s;
 }
 .input:focus {
-  border-color: #7C5CFF;
+  border-color: #7c5cff;
 }
 .input::placeholder {
-  color: #C0BBC9;
+  color: #c0bbc9;
 }
 
 /* 에러 */
 .error-msg {
   font-size: 13px;
-  color: #E53935;
+  color: #e53935;
   text-align: center;
   margin: 0;
 }
@@ -162,42 +168,53 @@ async function onSubmit() {
 .btn-login {
   height: 54px;
   border-radius: 16px;
-  background: #7C5CFF;
+  background: #7c5cff;
   color: white;
   font-size: 16px;
   font-weight: 700;
   border: none;
   cursor: pointer;
   margin-top: 4px;
-  transition: opacity 0.15s, transform 0.08s;
+  transition:
+    opacity 0.15s,
+    transform 0.08s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.btn-login:active { transform: scale(0.98); }
-.btn-login:disabled { opacity: 0.6; cursor: default; }
+.btn-login:active {
+  transform: scale(0.98);
+}
+.btn-login:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 
 .spinner {
   width: 22px;
   height: 22px;
-  border: 2.5px solid rgba(255,255,255,0.4);
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* 회원가입 링크 */
 .signup-link {
   text-align: center;
   margin-top: 24px;
   font-size: 14px;
-  color: #7A7388;
+  color: #7a7388;
 }
 .link-btn {
   background: none;
   border: none;
-  color: #7C5CFF;
+  color: #7c5cff;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
