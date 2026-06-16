@@ -146,6 +146,7 @@ const router = createRouter({
           path: 'study/:id',
           name: 'study-detail',
           component: () => import('@/views/study/StudyDetailView.vue'),
+          meta: { header: { title: '투자공부', backMode: true } },
         },
 
         // ── 마이페이지 탭 ─────────────────────────────────
