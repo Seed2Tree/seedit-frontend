@@ -27,7 +27,12 @@
 
       <!-- 영상 정보 -->
       <div class="video-info">
-        <span class="category-badge">{{ video.category }}</span>
+        <div class="info-top">
+          <span class="category-badge">{{ video.category }}</span>
+          <button class="bookmark-btn" @click="toggleBookmark" :aria-label="isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'">
+            <Star :size="20" :fill="isBookmarked ? '#7C5CFF' : 'none'" :color="isBookmarked ? '#7C5CFF' : '#ccc'" />
+          </button>
+        </div>
         <h2 class="video-title">{{ video.title }}</h2>
         <p v-if="video.description" class="video-desc">{{ video.description }}</p>
       </div>
@@ -38,14 +43,16 @@
           <span class="yt-icon">▶</span> 유튜브에서 보기
         </a>
       </div>
+
     </template>
 
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Star } from 'lucide-vue-next'
 import { useStudyStore } from '@/stores/study'
 
 const route = useRoute()
@@ -54,6 +61,12 @@ const store = useStudyStore()
 
 const video = computed(() => store.selectedVideo)
 const videoId = computed(() => store.videoIdFrom(video.value?.youtubeUrl))
+
+const isBookmarked = ref(false)
+function toggleBookmark() {
+  isBookmarked.value = !isBookmarked.value
+  // TODO: API 연결 시 store.addBookmark(video.value.isid) / store.removeBookmark(video.value.isid)
+}
 
 onMounted(async () => {
   // 직접 URL로 접근했거나 새로고침한 경우 백엔드에서 재조회
@@ -119,6 +132,21 @@ onMounted(async () => {
   border-bottom: 1px solid #f0f0f0;
 }
 
+.info-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bookmark-btn {
+  border: none;
+  background: transparent;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
 .category-badge {
   font-size: 11px;
   color: #7C5CFF;
@@ -144,22 +172,19 @@ onMounted(async () => {
 }
 
 .link-wrap {
-  padding: 16px;
+  padding: 12px 16px;
 }
 .youtube-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #fff;
-  border-radius: 10px;
+  gap: 6px;
   color: #E53935;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
+.youtube-link:hover { opacity: 0.75; }
 .yt-icon {
-  font-size: 16px;
+  font-size: 13px;
 }
 </style>
