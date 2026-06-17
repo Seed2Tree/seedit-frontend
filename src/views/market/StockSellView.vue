@@ -68,19 +68,6 @@
         </div>
       </div>
 
-      <!-- 처음 살 때 이유 (F03에서 작성한 매수 가설, 읽기 전용) -->
-      <!-- <div class="origin-reason">
-        <div class="reason-title">처음 살 때 이유는</div>
-        <div v-if="originalReason" class="origin-card">
-          <div class="origin-badge">
-            <span class="tag-emoji">{{ originalReason.emoji }}</span>
-            {{ originalReason.label }}
-            <span v-if="originalReason.date"> · {{ originalReason.date }}</span>
-          </div>
-          <p class="origin-text">"{{ originalReason.text }}"</p>
-        </div>
-        <div v-else class="origin-empty">기록된 매수 이유가 없어요.</div>
-      </div> -->
       <div class="origin-reason">
         <div class="reason-title">처음 살 때 이유는</div>
         <template v-if="buyReasons.length">
@@ -157,7 +144,19 @@ const sellReasonTags = [
   { value: 'bad-news', label: '악재', emoji: '📉' },
   { value: 'switch', label: '다른 종목으로', emoji: '🔄' },
 ]
-
+// 출력: 코드 → 한글 변환 맵
+const tagLabel = {
+  earnings: '실적 기대',
+  news: '호재 뉴스',
+  long: '장기 투자',
+  rebound: '단기 반등',
+  chart: '차트 패턴',
+  etc: '기타',
+  target: '목표가 도달',
+  stoploss: '손절',
+  'bad-news': '악재',
+  switch: '다른 종목으로',
+}
 // 매수 가설 카테고리 → 표시용 라벨/이모지 (원래 이유 렌더링에 사용)
 // 태그가 한글 라벨로 오니까 라벨 기준 이모지 맵
 const tagEmoji = {
@@ -173,7 +172,7 @@ const buyReasons = computed(() =>
   originalReasons.value
     .filter((r) => r.reasonType === 'BUY')
     .map((r) => ({
-      label: r.reasonTag,
+      label: tagLabel[r.reasonTag] ?? r.reasonTag,
       emoji: tagEmoji[r.reasonTag] ?? '✏️',
       date: formatDate(r.reasonDate),
       text: r.reasonText,
@@ -237,16 +236,16 @@ function onCancel() {
 async function onSubmit() {
   if (!canSubmit.value) return
   try {
-    // // F04 모의 매도 + F05 투자 복기
-    // // ⚠️ 필드명은 백엔드 /api/trades/sell 명세에 맞춰 조정 필요
-    // await client.post('/trades/sell', {
-    //   sid: company.value.sid,
-    //   quantity: quantity.value,
-    //   price: currentPrice.value,
-    //   sellReasonCategory: selectedTag.value || null,
-    //   sellReason: reasonText.value.trim() || null,
-    // })
-    router.push({ name: 'portfolio-detail', params: { ticker } })
+    const payload = {
+      ticker: ticker,
+      quantity: quantity.value,
+      tradeType: 'SELL',
+      reasonTag: selectedTag.value || null,
+      reasonText: reasonText.value || null,
+    }
+    console.log(payload)
+    await tradesApi.sellStock(payload)
+    router.replace({ name: 'portfolio-detail', params: { ticker } })
   } catch (e) {
     alert('매도에 실패했어요. 잠시 후 다시 시도해주세요.')
   }
@@ -259,7 +258,6 @@ onMounted(async () => {
     const res = await tradesApi.getSellStock(ticker)
     const s = res.data
     if (s) {
-      console.log(s)
       company.value = {
         name: s.stock.companyName,
         ticker: s.stock.ticker,
@@ -274,23 +272,9 @@ onMounted(async () => {
     }
   } catch (e) {
     // 종목 로드 실패
+    alert('보유하신 종목이 아닙니다. 다시 시도해주세요.')
+    router.replcae({ name: 'stock-detail', params: { ticker } })
   }
-
-  // const sid = company.value.sid
-
-  // // 2) 보유 종목 상세 (평단가 / 보유 수량)  GET /api/portfolio/{sid}
-  // // ⚠️ 응답 필드명(avgPrice, quantity)은 백엔드 명세에 맞춰 조정
-  // try {
-  //   const res = await client.get(`/portfolio/${sid}`)
-  //   const p = res.data
-  //   if (p) {
-  //     avgPrice.value = p.avgPrice ?? p.avgBuyPrice ?? 0
-  //     currentQuantity.value = p.quantity ?? p.holdingQty ?? 0
-  //     quantity.value = Math.min(quantity.value, currentQuantity.value || 1)
-  //   }
-  // } catch (e) {
-  //   // 보유 정보 로드 실패
-  // }
 })
 
 function formatDate(iso) {

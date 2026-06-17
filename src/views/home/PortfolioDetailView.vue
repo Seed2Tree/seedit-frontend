@@ -134,6 +134,19 @@ const tagEmoji = {
   '다른 종목으로': '🔄',
   기타: '✏️',
 }
+// 출력: 코드 → 한글 변환 맵
+const tagLabel = {
+  earnings: '실적 기대',
+  news: '호재 뉴스',
+  long: '장기 투자',
+  rebound: '단기 반등',
+  chart: '차트 패턴',
+  etc: '기타',
+  target: '목표가 도달',
+  stoploss: '손절',
+  'bad-news': '악재',
+  switch: '다른 종목으로',
+}
 
 // 보유 지표
 const currentPrice = computed(() => stock.value.currentPrice ?? 0)
@@ -150,7 +163,7 @@ function mapReasons(type) {
   return reasons.value
     .filter((r) => r.reasonType === type)
     .map((r) => ({
-      label: r.reasonTag,
+      label: tagLabel[r.reasonTag] ?? r.reasonTag,
       emoji: tagEmoji[r.reasonTag] ?? '✏️',
       date: formatDate(r.reasonDate),
       text: r.reasonText,

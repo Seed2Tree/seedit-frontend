@@ -2,7 +2,7 @@ import client from './client'
 
 export const tradesApi = {
   orderStock: (data) => client.post('/trades/buy', data),
-  sellStock: (data) => client.post('/trade/sell', data),
+  sellStock: (data) => client.post('/trades/sell', data),
   getBuyStock: (ticker) => client.get(`/trades/buy/${ticker}`),
   getSellStock: (ticker) => client.get(`/trades/sell/${ticker}`),
   getTradeHistory: () => client.get('/trades'),

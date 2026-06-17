@@ -176,7 +176,7 @@ async function onSubmit() {
 
     await tradesApi.orderStock(payload)
 
-    router.push({ name: 'portfolio-detail', params: { ticker } })
+    router.replace({ name: 'portfolio-detail', params: { ticker } })
   } catch (e) {
     alert('매수에 실패했어요. 잠시 후 다시 시도해주세요.')
   }
