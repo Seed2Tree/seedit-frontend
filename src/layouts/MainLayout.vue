@@ -7,22 +7,24 @@
       :star="headerStore.star"
     />
     <main class="content"><RouterView /></main>
-    <BottomTabBar />
+    <BottomTabBar v-if="!route.meta.hideTabBar" />
   </div>
 </template>
 
 <script setup>
+import { useRoute } from 'vue-router'
 import BottomTabBar from '@/components/BottomTabBar.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import { useHeaderStore } from '@/stores/header'
 
+const route = useRoute()
 const headerStore = useHeaderStore()
 </script>
 
 <style scoped>
 .main-layout {
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }

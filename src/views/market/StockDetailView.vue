@@ -1,20 +1,32 @@
 <template>
   <div class="detail-page">
-
     <!-- 탑바 -->
     <div class="topbar">
       <button class="icon-btn" @click="router.back()">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5">
-          <path d="M15 18l-6-6 6-6"/>
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+        >
+          <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
       <div class="topbar-title">{{ stock?.companyName ?? '종목 상세' }}</div>
       <button class="icon-btn" @click="onToggleWatchlist">
-        <svg width="22" height="22" viewBox="0 0 24 24"
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
           :fill="isWatched ? '#7C5CFF' : 'none'"
-          stroke="#7C5CFF" stroke-width="2">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          stroke="#7C5CFF"
+          stroke-width="2"
+        >
+          <polygon
+            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+          />
         </svg>
       </button>
     </div>
@@ -36,7 +48,8 @@
       <div class="price-section">
         <div class="meta-line">
           <span>
-            {{ stock.ticker }} · {{ stock.market }}<template v-if="stock.sector"> · {{ stock.sector }}</template>
+            {{ stock.ticker }} · {{ stock.market
+            }}<template v-if="stock.sector"> · {{ stock.sector }}</template>
           </span>
           <span v-if="baseTimeLabel" class="base-time">{{ baseTimeLabel }}</span>
         </div>
@@ -44,7 +57,8 @@
           {{ formatNumber(stock.currentPrice) }}<span class="price-unit">원</span>
         </div>
         <div :class="['price-change', changeClass]">
-          {{ formatChangePrice(stock.changePrice) }} · {{ formatRate(stock.changeRate) }} (전일 대비)
+          {{ formatChangePrice(stock.changePrice) }} · {{ formatRate(stock.changeRate) }} (전일
+          대비)
         </div>
 
         <!-- 매수/매도 -->
@@ -61,7 +75,9 @@
           :key="t.value"
           :class="['tab-item', { active: activeTab === t.value }]"
           @click="activeTab = t.value"
-        >{{ t.label }}</button>
+        >
+          {{ t.label }}
+        </button>
       </div>
 
       <!-- ============ 종합 탭 ============ -->
@@ -131,7 +147,9 @@
             </div>
             <div class="grid-item">
               <span class="grid-key">외인비중</span>
-              <span class="grid-val">{{ stock.foreignOwnershipPct != null ? stock.foreignOwnershipPct.toFixed(2) + '%' : '-' }}</span>
+              <span class="grid-val">{{
+                stock.foreignOwnershipPct != null ? stock.foreignOwnershipPct.toFixed(2) + '%' : '-'
+              }}</span>
             </div>
             <div class="grid-item">
               <span class="grid-key">PER</span>
@@ -162,7 +180,9 @@
             :key="p.value"
             :class="['period-tab', { active: selectedPeriod === p.value }]"
             @click="onPeriodChange(p.value)"
-          >{{ p.label }}</button>
+          >
+            {{ p.label }}
+          </button>
         </div>
 
         <!-- SVG 캔들 차트 -->
@@ -178,18 +198,16 @@
               <g v-for="(c, i) in candleGeometry" :key="i">
                 <!-- 꼬리(wick): 고가~저가 -->
                 <line
-                  :x1="c.cx" :x2="c.cx"
-                  :y1="c.yHigh" :y2="c.yLow"
+                  :x1="c.cx"
+                  :x2="c.cx"
+                  :y1="c.yHigh"
+                  :y2="c.yLow"
                   :stroke="c.color"
                   stroke-width="1"
                   vector-effect="non-scaling-stroke"
                 />
                 <!-- 몸통(body): 시가~종가 -->
-                <rect
-                  :x="c.x" :y="c.yBody"
-                  :width="c.w" :height="c.h"
-                  :fill="c.color"
-                />
+                <rect :x="c.x" :y="c.yBody" :width="c.w" :height="c.h" :fill="c.color" />
               </g>
             </svg>
             <div v-else class="chart-empty">차트 데이터가 없어요</div>
@@ -211,7 +229,6 @@
 
       <div class="detail-bottom-spacer" />
     </template>
-
   </div>
 </template>
 
@@ -227,7 +244,7 @@ const stocksStore = useStocksStore()
 
 const ticker = route.params.ticker
 const stock = ref(null)
-const candles = ref([])              // [{ date, open, close, high, low }]
+const candles = ref([]) // [{ date, open, close, high, low }]
 const isLoading = ref(false)
 const error = ref(false)
 const activeTab = ref('summary')
@@ -252,9 +269,7 @@ const periods = [
 const isWatched = computed(() => stock.value && stocksStore.isWatched(stock.value.sid))
 
 // 상승 빨강 / 하락 파랑
-const changeClass = computed(() =>
-  (stock.value?.changeRate ?? 0) >= 0 ? 'gain' : 'loss'
-)
+const changeClass = computed(() => ((stock.value?.changeRate ?? 0) >= 0 ? 'gain' : 'loss'))
 
 // 52주 밴드 내 현재가 위치 (%)
 const w52Percent = computed(() => {
@@ -293,7 +308,7 @@ const candleGeometry = computed(() => {
   const y = (v) => SVG_H - PAD_Y - ((v - min) / range) * (SVG_H - PAD_Y * 2)
 
   const band = SVG_W / cs.length
-  const w = Math.min(band * 0.6, 24)   // 몸통 폭 (캔들 적을 때 과대 방지)
+  const w = Math.min(band * 0.6, 24) // 몸통 폭 (캔들 적을 때 과대 방지)
 
   return cs.map((c, i) => {
     const cx = band * i + band / 2
@@ -306,8 +321,8 @@ const candleGeometry = computed(() => {
       yHigh: y(c.high),
       yLow: y(c.low),
       yBody: Math.min(yOpen, yClose),
-      h: Math.max(Math.abs(yOpen - yClose), 1.5),  // 시가=종가(도지)여도 최소 두께
-      color: c.close >= c.open ? '#E53935' : '#1E6EF4',  // 양봉 빨강 / 음봉 파랑
+      h: Math.max(Math.abs(yOpen - yClose), 1.5), // 시가=종가(도지)여도 최소 두께
+      color: c.close >= c.open ? '#E53935' : '#1E6EF4', // 양봉 빨강 / 음봉 파랑
     }
   })
 })
@@ -328,7 +343,8 @@ const xLabels = computed(() => {
 function formatDateLabel(dateStr, period) {
   const d = new Date(dateStr)
   if (period === '1d' || period === '1w') return `${d.getMonth() + 1}.${d.getDate()}`
-  if (period === '1y' || period === '5y') return `${String(d.getFullYear()).slice(2)}년 ${d.getMonth() + 1}월`
+  if (period === '1y' || period === '5y')
+    return `${String(d.getFullYear()).slice(2)}년 ${d.getMonth() + 1}월`
   return `${d.getMonth() + 1}월`
 }
 
@@ -440,7 +456,7 @@ onMounted(() => {
 .topbar-title {
   font-size: 17px;
   font-weight: 700;
-  color: #1E1A2E;
+  color: #1e1a2e;
 }
 .icon-btn {
   width: 40px;
@@ -451,10 +467,12 @@ onMounted(() => {
   background: none;
   border: none;
   cursor: pointer;
-  color: #1E1A2E;
+  color: #1e1a2e;
   border-radius: 12px;
 }
-.icon-btn:active { background: #f7f6fb; }
+.icon-btn:active {
+  background: #f7f6fb;
+}
 
 /* 현재가 헤더 */
 .price-section {
@@ -466,17 +484,17 @@ onMounted(() => {
   justify-content: space-between;
   font-size: 12px;
   font-weight: 600;
-  color: #A8A2B5;
+  color: #a8a2b5;
 }
 .base-time {
   font-size: 11px;
   font-weight: 500;
-  color: #B5B0C2;
+  color: #b5b0c2;
 }
 .current-price {
   font-size: 38px;
   font-weight: 800;
-  color: #1E1A2E;
+  color: #1e1a2e;
   letter-spacing: -0.03em;
   margin-top: 6px;
   font-variant-numeric: tabular-nums;
@@ -485,7 +503,7 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 700;
   margin-left: 4px;
-  color: #4A4459;
+  color: #4a4459;
 }
 .price-change {
   font-size: 14px;
@@ -493,8 +511,12 @@ onMounted(() => {
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
-.gain { color: #E53935; }
-.loss { color: #1E6EF4; }
+.gain {
+  color: #e53935;
+}
+.loss {
+  color: #1e6ef4;
+}
 
 /* 매수/매도 */
 .cta-row {
@@ -502,7 +524,8 @@ onMounted(() => {
   gap: 10px;
   margin-top: 16px;
 }
-.btn-buy, .btn-sell {
+.btn-buy,
+.btn-sell {
   flex: 1;
   height: 50px;
   border-radius: 14px;
@@ -513,9 +536,16 @@ onMounted(() => {
   cursor: pointer;
   transition: transform 0.08s;
 }
-.btn-buy:active, .btn-sell:active { transform: scale(0.97); }
-.btn-buy { background: #D9534F; }
-.btn-sell { background: #5B74F2; }
+.btn-buy:active,
+.btn-sell:active {
+  transform: scale(0.97);
+}
+.btn-buy {
+  background: #d9534f;
+}
+.btn-sell {
+  background: #5b74f2;
+}
 
 /* 탭 */
 .tab-bar {
@@ -530,21 +560,21 @@ onMounted(() => {
   border: none;
   font-size: 15px;
   font-weight: 700;
-  color: #A8A2B5;
+  color: #a8a2b5;
   cursor: pointer;
   border-bottom: 2.5px solid transparent;
   margin-bottom: -1px;
 }
 .tab-item.active {
-  color: #1E1A2E;
-  border-bottom-color: #1E1A2E;
+  color: #1e1a2e;
+  border-bottom-color: #1e1a2e;
 }
 
 /* 섹션 */
 .section-title {
   font-size: 17px;
   font-weight: 800;
-  color: #1E1A2E;
+  color: #1e1a2e;
   margin: 24px 20px 12px;
 }
 .card {
@@ -558,7 +588,7 @@ onMounted(() => {
   margin: 0 20px;
   font-size: 14px;
   line-height: 1.7;
-  color: #4A4459;
+  color: #4a4459;
 }
 
 /* 52주 슬라이더 */
@@ -572,7 +602,7 @@ onMounted(() => {
   top: 0;
   transform: translateX(-50%);
   background: #f2eeff;
-  color: #7C5CFF;
+  color: #7c5cff;
   font-size: 12px;
   font-weight: 800;
   padding: 4px 10px;
@@ -593,9 +623,9 @@ onMounted(() => {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #7C5CFF;
+  background: #7c5cff;
   border: 3px solid white;
-  box-shadow: 0 1px 4px rgba(20,14,60,0.25);
+  box-shadow: 0 1px 4px rgba(20, 14, 60, 0.25);
 }
 .w52-labels {
   display: flex;
@@ -607,16 +637,18 @@ onMounted(() => {
   flex-direction: column;
   gap: 2px;
 }
-.w52-label.right { align-items: flex-end; }
+.w52-label.right {
+  align-items: flex-end;
+}
 .label-key {
   font-size: 11px;
-  color: #A8A2B5;
+  color: #a8a2b5;
   font-weight: 600;
 }
 .label-val {
   font-size: 14px;
   font-weight: 800;
-  color: #1E1A2E;
+  color: #1e1a2e;
   font-variant-numeric: tabular-nums;
 }
 
@@ -634,13 +666,13 @@ onMounted(() => {
 }
 .grid-key {
   font-size: 13px;
-  color: #7A7388;
+  color: #7a7388;
   font-weight: 600;
 }
 .grid-val {
   font-size: 14px;
   font-weight: 800;
-  color: #1E1A2E;
+  color: #1e1a2e;
   font-variant-numeric: tabular-nums;
 }
 
@@ -658,14 +690,14 @@ onMounted(() => {
   border: 1px solid #e5e2ec;
   font-size: 13px;
   font-weight: 700;
-  color: #4A4459;
+  color: #4a4459;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
 }
 .period-tab.active {
-  background: #1E1A2E;
-  border-color: #1E1A2E;
+  background: #1e1a2e;
+  border-color: #1e1a2e;
   color: white;
 }
 
@@ -688,18 +720,20 @@ onMounted(() => {
 }
 .chart-empty {
   font-size: 13px;
-  color: #A8A2B5;
+  color: #a8a2b5;
 }
 .x-labels {
   display: flex;
   justify-content: space-between;
   padding: 8px 8px 0;
   font-size: 11px;
-  color: #A8A2B5;
+  color: #a8a2b5;
   font-weight: 600;
 }
 
-.detail-bottom-spacer { height: 24px; }
+.detail-bottom-spacer {
+  height: 24px;
+}
 
 /* 상태 */
 .state-box {
@@ -709,22 +743,26 @@ onMounted(() => {
   justify-content: center;
   gap: 12px;
   padding: 80px 20px;
-  color: #7A7388;
+  color: #7a7388;
   font-size: 14px;
 }
 .spinner {
   width: 28px;
   height: 28px;
   border: 3px solid #efedf4;
-  border-top-color: #7C5CFF;
+  border-top-color: #7c5cff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .retry-btn {
   padding: 10px 24px;
   border-radius: 9999px;
-  background: #7C5CFF;
+  background: #7c5cff;
   color: white;
   font-size: 14px;
   font-weight: 700;
