@@ -4,21 +4,19 @@ import { stocksApi } from '@/api/stocks'
 import { watchlistApi } from '@/api/watchlist'
 
 export const useStocksStore = defineStore('stocks', () => {
-  const stocks = ref([])          // 전체 종목 리스트
-  const watchlistIds = ref([])    // 관심종목 stockId 목록
+  const stocks = ref([]) // 전체 종목 리스트
+  const watchlistIds = ref([]) // 관심종목 stockId 목록
   const isLoading = ref(false)
   const error = ref(null)
 
   // 관심종목 필터링
   const watchlistStocks = computed(() =>
-    stocks.value.filter((s) => watchlistIds.value.includes(s.sid))
+    stocks.value.filter((s) => watchlistIds.value.includes(s.sid)),
   )
 
   // 오늘 가장 많이 오른 종목 TOP 3
   const trendingStocks = computed(() =>
-    [...stocks.value]
-      .sort((a, b) => b.changeRate - a.changeRate)
-      .slice(0, 3)
+    [...stocks.value].sort((a, b) => b.changeRate - a.changeRate).slice(0, 3),
   )
 
   // 전체 종목 + 관심종목 목록 불러오기

@@ -59,11 +59,11 @@ const router = createRouter({
           component: () => import('@/views/home/PortfolioView.vue'),
         },
         {
-          // F06: 보유 종목 개별 상세 (StockDetailView 재사용)
+          // F06: 보유 종목 개별 상세
           path: 'home/portfolio/:ticker',
           name: 'portfolio-detail',
-          component: () => import('@/views/market/StockDetailView.vue'),
-          meta: { header: { title: '기업명', backMode: true, star: true } },
+          component: () => import('@/views/home/PortfolioDetailView.vue'),
+          meta: { header: { title: '보유 종목', backMode: true } },
         },
         {
           // F24: 레벨/포인트/미션 (홈에서 진입)
@@ -103,14 +103,14 @@ const router = createRouter({
           path: 'market/:ticker/buy',
           name: 'stock-buy',
           component: () => import('@/views/market/StockBuyView.vue'),
-          meta: { header: { title: '매수', backMode: true } },
+          meta: { header: { title: '매수', backMode: true }, hideTabBar: true },
         },
         {
           // F04 + F05: 모의 매도 + 투자 복기
           path: 'market/:ticker/sell',
           name: 'stock-sell',
           component: () => import('@/views/market/StockSellView.vue'),
-          meta: { header: { title: '매도', backMode: true } },
+          meta: { header: { title: '매도', backMode: true }, hideTabBar: true },
         },
 
         // ── 투자일지 탭 ───────────────────────────────────

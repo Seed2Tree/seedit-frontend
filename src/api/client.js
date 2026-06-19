@@ -41,8 +41,8 @@ client.interceptors.response.use(
     isRefreshing = true
 
     try {
-      const data = await client.post('/auth/refresh') // 쿠키로 새 access token 발급
-      const newToken = data.accessToken // ← 프로젝트 응답 구조에 맞춤 (login과 동일)
+      const res = await client.post('/auth/refresh') // 쿠키로 새 access token 발급
+      const newToken = res.data.accessToken // ← 프로젝트 응답 구조에 맞춤 (login과 동일)
       localStorage.setItem('accessToken', newToken)
 
       waiters.forEach((w) => w.resolve(newToken)) // 대기 요청들 깨우기

@@ -15,18 +15,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(email, password) {
     const res = await authApi.login(email, password)
-<<<<<<< Updated upstream
-    accessToken.value = res.accessToken
-    localStorage.setItem('accessToken', res.accessToken)
-    setUser({ email: res.email })
-=======
     // 백엔드 응답 봉투: { success, data: { accessToken, tokenType, user }, error }
     // client.js 인터셉터가 axios 응답에서 봉투(res.data)까지만 벗겨줌
     const { accessToken: token, user: userInfo } = res.data
     accessToken.value = token
     user.value = userInfo
     localStorage.setItem('accessToken', token)
->>>>>>> Stashed changes
   }
 
   function logout() {

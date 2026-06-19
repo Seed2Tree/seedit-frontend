@@ -1,6 +1,5 @@
 <template>
   <div class="market-page">
-
     <!-- 헤더 -->
     <div class="market-header">
       <div class="page-title">투자종목</div>
@@ -8,9 +7,19 @@
 
       <!-- 검색창 -->
       <div class="search-wrap">
-        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        <svg
+          class="search-icon"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
         </svg>
         <input
           v-model="query"
@@ -24,14 +33,15 @@
 
       <!-- 필터 탭: 전체 / 관심종목 -->
       <div v-if="!query" class="filter-tabs">
-        <button
-          :class="['filter-tab', { active: filter === 'all' }]"
-          @click="filter = 'all'"
-        >전체</button>
+        <button :class="['filter-tab', { active: filter === 'all' }]" @click="filter = 'all'">
+          전체
+        </button>
         <button
           :class="['filter-tab', { active: filter === 'watchlist' }]"
           @click="filter = 'watchlist'"
-        >⭐ 관심종목</button>
+        >
+          ⭐ 관심종목
+        </button>
       </div>
     </div>
 
@@ -104,7 +114,6 @@
         </div>
       </div>
     </template>
-
   </div>
 </template>
 
@@ -121,15 +130,11 @@ const filter = ref('all') // 'all' | 'watchlist'
 
 // 검색 + 필터 적용
 const filteredStocks = computed(() => {
-  let list = filter.value === 'watchlist'
-    ? marketStore.watchlistStocks
-    : marketStore.stocks
+  let list = filter.value === 'watchlist' ? marketStore.watchlistStocks : marketStore.stocks
 
   if (query.value.trim()) {
     const q = query.value.trim()
-    list = list.filter(
-      (s) => s.companyName.includes(q) || s.ticker.includes(q)
-    )
+    list = list.filter((s) => s.companyName.includes(q) || s.ticker.includes(q))
   }
   return list
 })
@@ -175,12 +180,12 @@ onMounted(() => {
 .page-title {
   font-size: 26px;
   font-weight: 800;
-  color: #1E1A2E;
+  color: #1e1a2e;
   letter-spacing: -0.025em;
 }
 .page-subtitle {
   font-size: 13px;
-  color: #7A7388;
+  color: #7a7388;
   margin-top: 4px;
 }
 
@@ -194,7 +199,7 @@ onMounted(() => {
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #A8A2B5;
+  color: #a8a2b5;
 }
 .search-input {
   width: 100%;
@@ -204,11 +209,11 @@ onMounted(() => {
   border-radius: 14px;
   padding: 0 40px 0 44px;
   font-size: 15px;
-  color: #1E1A2E;
+  color: #1e1a2e;
   outline: none;
 }
 .search-input:focus {
-  border-color: #7C5CFF;
+  border-color: #7c5cff;
   background: white;
 }
 .search-clear {
@@ -216,7 +221,7 @@ onMounted(() => {
   right: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #A8A2B5;
+  color: #a8a2b5;
   font-size: 14px;
   background: none;
   border: none;
@@ -237,13 +242,13 @@ onMounted(() => {
   background: white;
   font-size: 13px;
   font-weight: 600;
-  color: #7A7388;
+  color: #7a7388;
   cursor: pointer;
   transition: all 0.15s;
 }
 .filter-tab.active {
-  background: #7C5CFF;
-  border-color: #7C5CFF;
+  background: #7c5cff;
+  border-color: #7c5cff;
   color: white;
 }
 
@@ -254,7 +259,7 @@ onMounted(() => {
 .section-label {
   font-size: 12px;
   font-weight: 700;
-  color: #7A7388;
+  color: #7a7388;
   margin-bottom: 10px;
 }
 
@@ -269,7 +274,9 @@ onMounted(() => {
   padding-right: 20px;
   scrollbar-width: none;
 }
-.trending-list::-webkit-scrollbar { display: none; }
+.trending-list::-webkit-scrollbar {
+  display: none;
+}
 .trending-card {
   min-width: 140px;
   background: white;
@@ -279,19 +286,23 @@ onMounted(() => {
   text-align: left;
   cursor: pointer;
   flex-shrink: 0;
-  box-shadow: rgba(20,14,60,0.03) 0 0 0 1px, rgba(20,14,60,0.05) 0 2px 8px;
+  box-shadow:
+    rgba(20, 14, 60, 0.03) 0 0 0 1px,
+    rgba(20, 14, 60, 0.05) 0 2px 8px;
   transition: transform 0.1s;
 }
-.trending-card:active { transform: scale(0.97); }
+.trending-card:active {
+  transform: scale(0.97);
+}
 .trending-name {
   font-size: 14px;
   font-weight: 700;
-  color: #1E1A2E;
+  color: #1e1a2e;
   margin-top: 10px;
 }
 .trending-code {
   font-size: 11px;
-  color: #A8A2B5;
+  color: #a8a2b5;
   margin-top: 2px;
 }
 
@@ -301,7 +312,9 @@ onMounted(() => {
   border-radius: 18px;
   border: 1px solid #efedf4;
   overflow: hidden;
-  box-shadow: rgba(20,14,60,0.03) 0 0 0 1px, rgba(20,14,60,0.05) 0 2px 8px;
+  box-shadow:
+    rgba(20, 14, 60, 0.03) 0 0 0 1px,
+    rgba(20, 14, 60, 0.05) 0 2px 8px;
 }
 .stock-row {
   width: 100%;
@@ -316,8 +329,12 @@ onMounted(() => {
   cursor: pointer;
   transition: background 0.1s;
 }
-.stock-row:last-child { border-bottom: none; }
-.stock-row:active { background: #f7f6fb; }
+.stock-row:last-child {
+  border-bottom: none;
+}
+.stock-row:active {
+  background: #f7f6fb;
+}
 
 /* 아바타 */
 .stock-avatar {
@@ -339,11 +356,11 @@ onMounted(() => {
 .stock-name {
   font-size: 15px;
   font-weight: 700;
-  color: #1E1A2E;
+  color: #1e1a2e;
 }
 .stock-code {
   font-size: 12px;
-  color: #A8A2B5;
+  color: #a8a2b5;
   margin-top: 2px;
 }
 .stock-price-wrap {
@@ -352,7 +369,7 @@ onMounted(() => {
 .stock-price {
   font-size: 15px;
   font-weight: 700;
-  color: #1E1A2E;
+  color: #1e1a2e;
   font-variant-numeric: tabular-nums;
 }
 
@@ -363,8 +380,12 @@ onMounted(() => {
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
-.gain { color: #E53935; }
-.loss { color: #1E6EF4; }
+.gain {
+  color: #e53935;
+}
+.loss {
+  color: #1e6ef4;
+}
 
 /* 상태 */
 .state-box {
@@ -374,22 +395,26 @@ onMounted(() => {
   justify-content: center;
   gap: 12px;
   padding: 80px 20px;
-  color: #7A7388;
+  color: #7a7388;
   font-size: 14px;
 }
 .spinner {
   width: 28px;
   height: 28px;
   border: 3px solid #efedf4;
-  border-top-color: #7C5CFF;
+  border-top-color: #7c5cff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .retry-btn {
   padding: 10px 24px;
   border-radius: 9999px;
-  background: #7C5CFF;
+  background: #7c5cff;
   color: white;
   font-size: 14px;
   font-weight: 700;
