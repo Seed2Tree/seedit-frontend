@@ -27,12 +27,7 @@
 
       <!-- 영상 정보 -->
       <div class="video-info">
-        <div class="info-top">
-          <span class="category-badge">{{ video.category }}</span>
-          <button class="bookmark-btn" @click="toggleBookmark" :aria-label="isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'">
-            <Star :size="20" :fill="isBookmarked ? '#7C5CFF' : 'none'" :color="isBookmarked ? '#7C5CFF' : '#ccc'" />
-          </button>
-        </div>
+        <span class="category-badge">{{ video.category }}</span>
         <h2 class="video-title">{{ video.title }}</h2>
         <p v-if="video.description" class="video-desc">{{ video.description }}</p>
       </div>
@@ -52,12 +47,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Star } from 'lucide-vue-next'
 import { useStudyStore } from '@/stores/study'
+import { useHeaderStore } from '@/stores/header'
 
 const route = useRoute()
 const router = useRouter()
 const store = useStudyStore()
+const headerStore = useHeaderStore()
 
 const video = computed(() => store.selectedVideo)
 const videoId = computed(() => store.videoIdFrom(video.value?.youtubeUrl))
@@ -65,14 +61,16 @@ const videoId = computed(() => store.videoIdFrom(video.value?.youtubeUrl))
 const isBookmarked = ref(false)
 function toggleBookmark() {
   isBookmarked.value = !isBookmarked.value
+  headerStore.set({ isStarred: isBookmarked.value })
   // TODO: API 연결 시 store.addBookmark(video.value.isid) / store.removeBookmark(video.value.isid)
 }
 
 onMounted(async () => {
-  // 직접 URL로 접근했거나 새로고침한 경우 백엔드에서 재조회
   if (!store.selectedVideo || String(store.selectedVideo.isid) !== String(route.params.id)) {
     await store.fetchDetail(Number(route.params.id))
   }
+  // 헤더 별 버튼에 즐겨찾기 핸들러 등록
+  headerStore.set({ isStarred: isBookmarked.value, onStarClick: toggleBookmark })
 })
 </script>
 
@@ -130,21 +128,6 @@ onMounted(async () => {
   background: #fff;
   padding: 16px;
   border-bottom: 1px solid #f0f0f0;
-}
-
-.info-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.bookmark-btn {
-  border: none;
-  background: transparent;
-  padding: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
 }
 
 .category-badge {

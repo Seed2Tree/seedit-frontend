@@ -15,8 +15,12 @@
       <h1 class="title">{{ title }}</h1>
     </div>
     <div v-if="star">
-      <button aria-label="관심종목">
-        <Star :size="28" />
+      <button class="star-btn" @click="$emit('star-click')" aria-label="즐겨찾기">
+        <Star
+          :size="24"
+          :fill="isStarred ? '#7C5CFF' : 'none'"
+          :color="isStarred ? '#7C5CFF' : '#ccc'"
+        />
       </button>
     </div>
     <div v-else>
@@ -32,7 +36,9 @@ defineProps({
   backMode: { type: Boolean, default: false },
   title: { type: String, default: '' },
   star: { type: Boolean, default: false },
+  isStarred: { type: Boolean, default: false },
 })
+defineEmits(['star-click'])
 </script>
 
 <style scoped>
@@ -79,11 +85,19 @@ defineProps({
   height: 44px;
   justify-content: center;
   align-items: center;
+}
+
+.star-btn {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  justify-content: center;
+  align-items: center;
   border: none;
   background: none;
   cursor: pointer;
-}
-.div {
+  outline: none;
+  padding: 0;
 }
 
 .logo {
