@@ -5,6 +5,8 @@
       :back-mode="headerStore.backMode"
       :logo-mode="headerStore.logoMode"
       :star="headerStore.star"
+      :is-starred="headerStore.isStarred"
+      @star-click="headerStore.onStarClick?.()"
     />
     <main class="content"><RouterView /></main>
     <BottomTabBar v-if="!route.meta.hideTabBar" />
