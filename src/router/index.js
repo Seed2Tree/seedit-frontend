@@ -122,10 +122,10 @@ const router = createRouter({
         },
         {
           // F11 + F12 + F13: 일기 상세 조회 + 내용 수정 + AI 피드백
-          // (매수/매도 시 자동 생성, 별도 작성 화면 없음)
-          path: 'diary/:id',
+          path: 'diary/:date',
           name: 'diary-detail',
           component: () => import('@/views/diary/DiaryDetailView.vue'),
+          meta: { header: { title: '투자일지', backMode: true } },
         },
 
         // ── 투자공부 탭 ───────────────────────────────────
