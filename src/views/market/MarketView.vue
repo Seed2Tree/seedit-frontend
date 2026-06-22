@@ -2,24 +2,13 @@
   <div class="market-page">
     <!-- 헤더 -->
     <div class="market-header">
-      <div class="page-title">투자종목</div>
-      <div class="page-subtitle">관심 종목을 찾아보세요</div>
+      <h1 class="page-title">투자종목</h1>
 
       <!-- 검색창 -->
       <div class="search-wrap">
-        <svg
-          class="search-icon"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
         </svg>
         <input
           v-model="query"
@@ -65,30 +54,55 @@
 
       <div v-else>
         <!-- 오늘 급등 TOP 3 (검색·관심종목 필터 아닐 때만) -->
-        <div v-if="!query && filter === 'all'" class="section">
-          <div class="section-label">🔥 오늘 가장 많이 오른 종목</div>
-          <div class="trending-list">
+        <div v-if="!query && filter === 'all' && marketStore.trendingStocks.length > 0" class="trending-section">
+          <p class="section-label">🔥 오늘 가장 많이 오른 종목</p>
+
+          <!-- TOP 1 featured 카드 -->
+          <button class="trending-featured" @click="goDetail(marketStore.trendingStocks[0])">
+            <div class="featured-rank">1위</div>
+            <div class="featured-body">
+              <img
+            :src="logoUrl(marketStore.trendingStocks[0].ticker)"
+            class="featured-avatar"
+            :alt="marketStore.trendingStocks[0].companyName.slice(0, 2)"
+            @error="(e) => onLogoError(e, marketStore.trendingStocks[0].companyName)"
+          />
+              <div class="featured-info">
+                <span class="featured-name">{{ marketStore.trendingStocks[0].companyName }}</span>
+                <span class="featured-ticker">{{ marketStore.trendingStocks[0].ticker }}</span>
+              </div>
+            </div>
+            <div class="featured-rate">{{ formatRate(marketStore.trendingStocks[0].changeRate) }}</div>
+          </button>
+
+          <!-- TOP 2~3 compact 카드 -->
+          <div class="trending-row">
             <button
-              v-for="stock in marketStore.trendingStocks"
+              v-for="(stock, i) in marketStore.trendingStocks.slice(1, 3)"
               :key="stock.sid"
-              class="trending-card"
+              class="trending-mini"
               @click="goDetail(stock)"
             >
-              <div class="stock-avatar" :style="{ background: stock.color || '#7C5CFF' }">
-                {{ stock.companyName.slice(0, 2) }}
+              <span class="mini-rank">{{ i + 2 }}위</span>
+              <img
+                :src="logoUrl(stock.ticker)"
+                class="mini-avatar"
+                :alt="stock.companyName.slice(0, 2)"
+                @error="(e) => onLogoError(e, stock.companyName)"
+              />
+              <div class="mini-info">
+                <span class="mini-name">{{ stock.companyName }}</span>
+                <span class="mini-rate gain">{{ formatRate(stock.changeRate) }}</span>
               </div>
-              <div class="trending-name">{{ stock.companyName }}</div>
-              <div class="trending-code">{{ stock.ticker }}</div>
-              <div class="change-rate gain">{{ formatRate(stock.changeRate) }}</div>
             </button>
           </div>
         </div>
 
         <!-- 종목 리스트 -->
-        <div class="section">
-          <div class="section-label">
+        <div class="list-section">
+          <p class="section-label">
             {{ query ? `'${query}' 검색 결과` : filter === 'watchlist' ? '관심종목' : '전체 종목' }}
-          </div>
+          </p>
           <div class="stock-list">
             <button
               v-for="stock in filteredStocks"
@@ -96,18 +110,21 @@
               class="stock-row"
               @click="goDetail(stock)"
             >
-              <div class="stock-avatar" :style="{ background: stock.color || '#7C5CFF' }">
-                {{ stock.companyName.slice(0, 2) }}
-              </div>
+              <img
+                :src="logoUrl(stock.ticker)"
+                class="stock-avatar"
+                :alt="stock.companyName.slice(0, 2)"
+                @error="(e) => onLogoError(e, stock.companyName)"
+              />
               <div class="stock-info">
-                <div class="stock-name">{{ stock.companyName }}</div>
-                <div class="stock-code">{{ stock.ticker }}</div>
+                <span class="stock-name">{{ stock.companyName }}</span>
+                <span class="stock-code">{{ stock.ticker }}</span>
               </div>
               <div class="stock-price-wrap">
-                <div class="stock-price">{{ formatPrice(stock.currentPrice) }}</div>
-                <div :class="['change-rate', stock.changeRate >= 0 ? 'gain' : 'loss']">
+                <span class="stock-price">{{ formatPrice(stock.currentPrice) }}</span>
+                <span :class="['change-rate', stock.changeRate >= 0 ? 'gain' : 'loss']">
                   {{ formatRate(stock.changeRate) }}
-                </div>
+                </span>
               </div>
             </button>
           </div>
@@ -126,21 +143,18 @@ const router = useRouter()
 const marketStore = useStocksStore()
 
 const query = ref('')
-const filter = ref('all') // 'all' | 'watchlist'
+const filter = ref('all')
 
-// 검색 + 필터 적용
 const filteredStocks = computed(() => {
   let list = filter.value === 'watchlist' ? marketStore.watchlistStocks : marketStore.stocks
-
   if (query.value.trim()) {
-    const q = query.value.trim()
-    list = list.filter((s) => s.companyName.includes(q) || s.ticker.includes(q))
+    const q = query.value.trim().toLowerCase()
+    list = list.filter((s) => s.companyName.toLowerCase().includes(q) || s.ticker.toLowerCase().includes(q))
   }
   return list
 })
 
 function onSearch() {
-  // 검색 중엔 필터 초기화
   if (query.value) filter.value = 'all'
 }
 
@@ -159,6 +173,16 @@ function formatRate(rate) {
   return `${sign}${Number(rate).toFixed(2)}%`
 }
 
+function logoUrl(ticker) {
+  return `https://file.alphasquare.co.kr/media/images/stock_logo/kr/${ticker}.png`
+}
+
+function onLogoError(e, companyName) {
+  const initials = companyName.slice(0, 2)
+  e.target.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' rx='12' fill='%23ede9ff'/><text x='50%25' y='50%25' font-family='sans-serif' font-size='13' font-weight='800' fill='%237c5cff' text-anchor='middle' dominant-baseline='central'>${initials}</text></svg>`
+  e.target.onerror = null
+}
+
 onMounted(() => {
   marketStore.fetchList()
 })
@@ -167,227 +191,279 @@ onMounted(() => {
 <style scoped>
 .market-page {
   min-height: 100vh;
-  background: #f7f6fb;
+  background: #f8f8f8;
   padding-bottom: 100px;
 }
 
-/* 헤더 */
+/* ── 헤더 ── */
 .market-header {
-  background: white;
-  padding: 60px 20px 16px;
-  border-bottom: 1px solid #efedf4;
-}
-.page-title {
-  font-size: 26px;
-  font-weight: 800;
-  color: #1e1a2e;
-  letter-spacing: -0.025em;
-}
-.page-subtitle {
-  font-size: 13px;
-  color: #7a7388;
-  margin-top: 4px;
+  background: #fff;
+  padding: 20px 16px 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-/* 검색 */
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 14px;
+}
+
+/* ── 검색 ── */
 .search-wrap {
-  position: relative;
-  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 0 12px;
+  margin-bottom: 14px;
 }
-.search-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #a8a2b5;
-}
+.search-icon { color: #aaa; flex-shrink: 0; }
 .search-input {
-  width: 100%;
-  height: 48px;
-  background: #f7f6fb;
-  border: 1.5px solid #efedf4;
-  border-radius: 14px;
-  padding: 0 40px 0 44px;
-  font-size: 15px;
-  color: #1e1a2e;
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 8px;
+  font-size: 14px;
+  color: #333;
   outline: none;
 }
-.search-input:focus {
-  border-color: #7c5cff;
-  background: white;
-}
+.search-input::placeholder { color: #bbb; }
 .search-clear {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #a8a2b5;
-  font-size: 14px;
-  background: none;
   border: none;
+  background: transparent;
+  color: #aaa;
+  font-size: 13px;
   cursor: pointer;
+  padding: 4px;
 }
 
-/* 필터 탭 */
+/* ── 필터 탭 ── */
 .filter-tabs {
   display: flex;
   gap: 8px;
-  margin-top: 14px;
+  padding-bottom: 12px;
 }
 .filter-tab {
-  height: 34px;
-  padding: 0 16px;
+  height: 32px;
+  padding: 0 14px;
   border-radius: 9999px;
-  border: 1.5px solid #e4e2ed;
-  background: white;
+  border: 1.5px solid #ddd;
+  background: #fff;
   font-size: 13px;
-  font-weight: 600;
-  color: #7a7388;
+  font-weight: 500;
+  color: #555;
   cursor: pointer;
   transition: all 0.15s;
 }
 .filter-tab.active {
   background: #7c5cff;
   border-color: #7c5cff;
-  color: white;
+  color: #fff;
+  font-weight: 600;
 }
 
-/* 섹션 */
-.section {
-  padding: 20px 20px 0;
-}
+/* ── 섹션 공통 ── */
 .section-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  color: #7a7388;
-  margin-bottom: 10px;
+  color: #555;
+  margin: 0 0 10px;
 }
 
-/* 급등 카드 */
-.trending-list {
+/* ── 급등 섹션 ── */
+.trending-section {
+  padding: 20px 16px 0;
+}
+
+/* TOP 1 featured */
+.trending-featured {
+  width: 100%;
   display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  margin: 0 -20px;
-  padding-left: 20px;
-  padding-right: 20px;
-  scrollbar-width: none;
-}
-.trending-list::-webkit-scrollbar {
-  display: none;
-}
-.trending-card {
-  min-width: 140px;
-  background: white;
-  border-radius: 18px;
-  border: 1px solid #efedf4;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #7c5cff, #a07bff);
+  border: none;
+  border-radius: 16px;
   padding: 16px;
-  text-align: left;
+  margin-bottom: 10px;
   cursor: pointer;
-  flex-shrink: 0;
-  box-shadow:
-    rgba(20, 14, 60, 0.03) 0 0 0 1px,
-    rgba(20, 14, 60, 0.05) 0 2px 8px;
+  text-align: left;
   transition: transform 0.1s;
 }
-.trending-card:active {
-  transform: scale(0.97);
-}
-.trending-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1e1a2e;
-  margin-top: 10px;
-}
-.trending-code {
+.trending-featured:active { transform: scale(0.98); }
+
+.featured-rank {
   font-size: 11px;
-  color: #a8a2b5;
+  font-weight: 700;
+  color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.2);
+  padding: 3px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+.featured-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.featured-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.25);
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.featured-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.featured-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.featured-ticker {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 2px;
+}
+.featured-rate {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* TOP 2~3 */
+.trending-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.trending-mini {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 14px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+.trending-mini:active { background: #f8f8f8; }
+
+.mini-rank {
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  flex-shrink: 0;
+}
+.mini-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #ede9ff;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.mini-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.mini-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-rate {
+  font-size: 12px;
+  font-weight: 700;
   margin-top: 2px;
 }
 
-/* 종목 리스트 */
+/* ── 종목 리스트 ── */
+.list-section {
+  padding: 20px 16px 0;
+}
 .stock-list {
-  background: white;
-  border-radius: 18px;
-  border: 1px solid #efedf4;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #f0f0f0;
   overflow: hidden;
-  box-shadow:
-    rgba(20, 14, 60, 0.03) 0 0 0 1px,
-    rgba(20, 14, 60, 0.05) 0 2px 8px;
 }
 .stock-row {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  text-align: left;
+  gap: 12px;
+  padding: 14px 16px;
   background: none;
   border: none;
-  border-bottom: 1px solid #efedf4;
+  border-bottom: 1px solid #f5f5f5;
   cursor: pointer;
+  text-align: left;
   transition: background 0.1s;
 }
-.stock-row:last-child {
-  border-bottom: none;
-}
-.stock-row:active {
-  background: #f7f6fb;
-}
+.stock-row:last-child { border-bottom: none; }
+.stock-row:active { background: #f8f8f8; }
 
-/* 아바타 */
 .stock-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ede9ff;
+  object-fit: contain;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-  color: white;
 }
-.stock-info {
-  flex: 1;
-  min-width: 0;
-}
+.stock-info { flex: 1; min-width: 0; }
 .stock-name {
+  display: block;
   font-size: 15px;
-  font-weight: 700;
-  color: #1e1a2e;
+  font-weight: 600;
+  color: #111;
 }
 .stock-code {
+  display: block;
   font-size: 12px;
-  color: #a8a2b5;
+  color: #aaa;
   margin-top: 2px;
 }
-.stock-price-wrap {
-  text-align: right;
-}
+.stock-price-wrap { text-align: right; flex-shrink: 0; }
 .stock-price {
+  display: block;
   font-size: 15px;
   font-weight: 700;
-  color: #1e1a2e;
+  color: #111;
   font-variant-numeric: tabular-nums;
 }
 
-/* 등락률 */
+/* ── 등락률 ── */
 .change-rate {
+  display: block;
   font-size: 12px;
   font-weight: 700;
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
-.gain {
-  color: #e53935;
-}
-.loss {
-  color: #1e6ef4;
-}
+.gain { color: #e53935; }
+.loss { color: #1e6ef4; }
 
-/* 상태 */
+/* ── 상태 ── */
 .state-box {
   display: flex;
   flex-direction: column;
@@ -395,27 +471,23 @@ onMounted(() => {
   justify-content: center;
   gap: 12px;
   padding: 80px 20px;
-  color: #7a7388;
+  color: #888;
   font-size: 14px;
 }
 .spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid #efedf4;
+  border: 3px solid #eee;
   border-top-color: #7c5cff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 .retry-btn {
   padding: 10px 24px;
   border-radius: 9999px;
   background: #7c5cff;
-  color: white;
+  color: #fff;
   font-size: 14px;
   font-weight: 700;
   border: none;
