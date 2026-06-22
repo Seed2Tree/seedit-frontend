@@ -1,36 +1,5 @@
 <template>
   <div class="detail-page">
-    <!-- 탑바 -->
-    <div class="topbar">
-      <button class="icon-btn" @click="router.back()">
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
-      <div class="topbar-title">{{ stock?.companyName ?? '종목 상세' }}</div>
-      <button class="icon-btn" @click="onToggleWatchlist">
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          :fill="isWatched ? '#7C5CFF' : 'none'"
-          stroke="#7C5CFF"
-          stroke-width="2"
-        >
-          <polygon
-            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-          />
-        </svg>
-      </button>
-    </div>
-
     <!-- 로딩 -->
     <div v-if="isLoading" class="state-box">
       <div class="spinner" />
@@ -233,14 +202,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { stocksApi } from '@/api/stocks'
 import { useStocksStore } from '@/stores/stocks'
+import { useHeaderStore } from '@/stores/header'
 
 const router = useRouter()
 const route = useRoute()
 const stocksStore = useStocksStore()
+const headerStore = useHeaderStore()
 
 const ticker = route.params.ticker
 const stock = ref(null)
@@ -358,6 +329,11 @@ async function loadData() {
     ])
     stock.value = detailRes.data
     candles.value = pricesRes.data
+    headerStore.set({
+      title: stock.value.companyName,
+      isStarred: isWatched.value,
+      onStarClick: onToggleWatchlist,
+    })
   } catch (e) {
     error.value = true
   } finally {
@@ -433,6 +409,9 @@ onMounted(() => {
     stocksStore.fetchList()
   }
 })
+
+// 관심종목 토글 후 헤더 별 상태 동기화
+watch(isWatched, (val) => headerStore.set({ isStarred: val }))
 </script>
 
 <style scoped>
@@ -442,37 +421,6 @@ onMounted(() => {
   padding-bottom: 40px;
 }
 
-/* 탑바 */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 52px 8px 8px;
-  background: white;
-}
-.topbar-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: #1e1a2e;
-}
-.icon-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #1e1a2e;
-  border-radius: 12px;
-}
-.icon-btn:active {
-  background: #f7f6fb;
-}
 
 /* 현재가 헤더 */
 .price-section {
