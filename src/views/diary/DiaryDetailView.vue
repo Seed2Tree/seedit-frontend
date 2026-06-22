@@ -115,6 +115,7 @@
             <p class="ai-item-text">{{ parsedFeedback.action }}</p>
           </div>
         </div>
+        <p v-if="parsedFeedback" class="ai-hint" align="center">AI가 생성한 내용은 사실과 다를 수 있어요.<br>투자 복기를 위한 참고용으로만 사용해주세요.</p>
 
         <!-- 미생성 상태 -->
         <div v-else class="ai-placeholder">
