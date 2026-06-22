@@ -65,13 +65,14 @@
           v-model="diaryContent"
           class="diary-textarea"
           :placeholder="isFuture ? '미래 날짜에는 일지를 작성할 수 없어요.' : '오늘 매수/매도 일지를 작성해보세요.'"
-          :disabled="isFuture"
+          :disabled="isFuture || isEditLocked"
+          
           rows="6"
         />
         <button
           v-if="!isFuture"
           class="complete-btn"
-          :disabled="isSaving"
+          :disabled="isSaving || isEditLocked"
           @click="onSave"
         >
           {{ isSaving ? '저장 중...' : '✏ 완료' }}
@@ -83,15 +84,47 @@
         <div class="ai-header">
           <span class="ai-label">AI 피드백</span>
           <span class="ai-badge">BETA</span>
+          <span class="ai-counter">{{ parsedFeedback ? '1/1' : '0/1' }}</span>
         </div>
 
-        <div v-if="store.currentDiary?.aiFeedback" class="ai-card">
-          <p class="ai-feedback-text">{{ store.currentDiary.aiFeedback }}</p>
+        <!-- 피드백 결과 카드 -->
+        <div v-if="parsedFeedback" class="ai-result-card">
+          <div class="ai-score-row">
+            <div class="ai-stars">
+              <span
+                v-for="i in 5"
+                :key="i"
+                class="star"
+                :class="{ filled: i <= Math.round(parsedFeedback.score) }"
+              >★</span>
+            </div>
+            <span class="ai-score-value">
+              {{ parsedFeedback.score?.toFixed(1) }}<span class="score-max"> / 5.0</span>
+            </span>
+          </div>
+          <div class="ai-item">
+            <div class="ai-item-label good">✓ 잘한 점</div>
+            <p class="ai-item-text">{{ parsedFeedback.good }}</p>
+          </div>
+          <div class="ai-item">
+            <div class="ai-item-label improve">△ 생각해볼 점</div>
+            <p class="ai-item-text">{{ parsedFeedback.improve }}</p>
+          </div>
+          <div class="ai-item">
+            <div class="ai-item-label action">→ 다음 액션</div>
+            <p class="ai-item-text">{{ parsedFeedback.action }}</p>
+          </div>
         </div>
+        <p v-if="parsedFeedback" class="ai-hint" align="center">AI가 생성한 내용은 사실과 다를 수 있어요.<br>투자 복기를 위한 참고용으로만 사용해주세요.</p>
 
+        <!-- 미생성 상태 -->
         <div v-else class="ai-placeholder">
-          <button class="ai-generate-btn" disabled>
-            ✦ AI 피드백 생성하기
+          <button
+            class="ai-generate-btn"
+            :disabled="!canGenerateFeedback || isGenerating"
+            @click="onGenerateFeedback"
+          >
+            {{ isGenerating ? '생성 중...' : '✦ AI 피드백 생성하기' }}
           </button>
           <p class="ai-hint">오늘의 투자 내용을 바탕으로 AI 피드백을 받아보세요.<br>※ AI가 생성한 내용은 사실과 다를 수 있어요.</p>
         </div>
@@ -100,6 +133,19 @@
     </template>
 
   </div>
+
+  <!-- 확인 모달 -->
+  <Teleport to="body">
+    <div v-if="showFeedbackModal" class="modal-overlay" @click.self="showFeedbackModal = false">
+      <div class="modal-box">
+        <p class="modal-text">AI 피드백은 날짜별 <strong>1회</strong>만 생성 가능해요.<br>지금 생성하시겠어요?</p>
+        <div class="modal-actions">
+          <button class="modal-cancel" @click="showFeedbackModal = false">취소</button>
+          <button class="modal-confirm" @click="confirmGenerate">확인</button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -128,8 +174,10 @@ function reasonTagLabel(tag) {
   return REASON_TAG_LABELS[tag] ?? tag
 }
 
-const diaryContent = ref('')
-const isSaving     = ref(false)
+const diaryContent      = ref('')
+const isSaving          = ref(false)
+const isGenerating      = ref(false)
+const showFeedbackModal = ref(false)
 
 const currentDate = computed(() => route.params.date)
 
@@ -137,7 +185,10 @@ const todayStr = (() => {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 })()
-const isFuture = computed(() => currentDate.value > todayStr)
+const isFuture = computed(() => currentDate.value > todayStr) // 미래 날짜인지 여부
+const isEditLocked = computed(() =>
+  !!parsedFeedback.value  // 피드백 있으면 수정 불가
+)
 
 const formattedDate = computed(() => {
   if (!currentDate.value) return ''
@@ -151,6 +202,23 @@ const formattedDate = computed(() => {
 const hasBuy          = computed(() => store.currentTrades.some((t) => t.tradeType === 'BUY'))
 const hasSell         = computed(() => store.currentTrades.some((t) => t.tradeType === 'SELL'))
 const hasDiaryContent = computed(() => !!store.currentDiary?.content?.trim())
+
+// AI 피드백 파싱
+const parsedFeedback = computed(() => {
+  if (!store.currentDiary?.aiFeedback) return null
+  try {
+    return JSON.parse(store.currentDiary.aiFeedback)
+  } catch {
+    return null
+  }
+})
+
+// 피드백 생성 가능 여부 (거래 or 일지 내용 존재 + 미래 아님 + 미생성)
+const canGenerateFeedback = computed(() => {
+  if (isFuture.value) return false
+  if (parsedFeedback.value) return false
+  return store.currentTrades.length > 0 || !!store.currentDiary?.content?.trim()
+})
 
 // 날짜 이동
 function moveDate(delta) {
@@ -169,6 +237,22 @@ async function onSave() {
     await store.saveDiary(currentDate.value, diaryContent.value)
   } finally {
     isSaving.value = false
+  }
+}
+
+function onGenerateFeedback() {
+  showFeedbackModal.value = true
+}
+
+async function confirmGenerate() {
+  showFeedbackModal.value = false
+  isGenerating.value = true
+  try {
+    await store.generateFeedback(currentDate.value)
+  } catch {
+    alert('AI 피드백 생성에 실패했습니다. 잠시 후 다시 시도해주세요.')
+  } finally {
+    isGenerating.value = false
   }
 }
 
@@ -319,21 +403,53 @@ onMounted(() => loadData(currentDate.value))
 .complete-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* AI 피드백 */
-.ai-section { padding: 0 16px 16px; }
+.ai-section { padding: 0 16px 24px; }
 .ai-header { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
 .ai-label { font-size: 15px; font-weight: 600; color: #111; }
 .ai-badge {
   font-size: 9px; padding: 2px 6px; border-radius: 4px;
   background: #ede9ff; color: #7C5CFF; font-weight: 700;
 }
+.ai-counter { font-size: 12px; color: #bbb; margin-left: auto; }
 
-.ai-card {
+/* 결과 카드 */
+.ai-result-card {
   background: #f8f6ff;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
-.ai-feedback-text { font-size: 14px; color: #333; line-height: 1.6; margin: 0; }
 
+.ai-score-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #ede9ff;
+}
+.ai-stars { display: flex; gap: 2px; }
+.star { font-size: 20px; color: #ddd; }
+.star.filled { color: #7C5CFF; }
+.ai-score-value { font-size: 22px; font-weight: 700; color: #7C5CFF; margin-left: auto; }
+.score-max { font-size: 13px; color: #bbb; font-weight: 400; }
+
+.ai-item { display: flex; flex-direction: column; gap: 4px; }
+.ai-item-label {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+.ai-item-label.good    { background: #e6f7ee; color: #2e7d52; }
+.ai-item-label.improve { background: #fff8e1; color: #b77a00; }
+.ai-item-label.action  { background: #e8effe; color: #1E6EF4; }
+.ai-item-text { font-size: 13px; color: #333; line-height: 1.6; margin: 0; padding: 0 2px; }
+
+/* 미생성 상태 */
 .ai-placeholder { text-align: center; }
 .ai-generate-btn {
   width: 100%;
@@ -344,8 +460,43 @@ onMounted(() => loadData(currentDate.value))
   color: #fff;
   font-size: 15px;
   font-weight: 600;
-  cursor: not-allowed;
-  opacity: 0.5;
+  cursor: pointer;
 }
-.ai-hint { font-size: 12px; color: #aaa; margin-top: 8px; }
+.ai-generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.ai-hint { font-size: 12px; color: #aaa; margin-top: 8px; line-height: 1.6; }
+
+/* 모달 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 20px 20px;
+  width: 280px;
+  text-align: center;
+}
+.modal-text {
+  font-size: 14px;
+  color: #222;
+  line-height: 1.7;
+  margin: 0 0 20px;
+}
+.modal-actions { display: flex; gap: 10px; }
+.modal-cancel {
+  flex: 1; padding: 11px;
+  border: 1px solid #e0e0e0; border-radius: 10px;
+  background: #fff; color: #888; font-size: 14px; cursor: pointer;
+}
+.modal-confirm {
+  flex: 1; padding: 11px;
+  border: none; border-radius: 10px;
+  background: #7C5CFF; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+}
 </style>

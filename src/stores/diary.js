@@ -80,6 +80,14 @@ export const useDiaryStore = defineStore('diary', () => {
     currentDiary.value = null
   }
 
+  async function generateFeedback(date) {
+    const res = await diaryApi.generateFeedback(date)
+    if (!res.data) {
+      throw new Error(res.message ?? 'AI 피드백 생성에 실패했습니다.')
+    }
+    currentDiary.value = res.data
+  }
+
   function hasDiary(dateStr) {
     return diaryCalendarDates.value.includes(dateStr)
   }
@@ -103,6 +111,7 @@ export const useDiaryStore = defineStore('diary', () => {
     fetchDateDetail,
     saveDiary,
     deleteDiary,
+    generateFeedback,
     hasDiary,
     tradeDotsFor,
   }

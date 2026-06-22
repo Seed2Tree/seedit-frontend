@@ -7,6 +7,7 @@ export const diaryApi = {
   create: (diaryDate, content) => client.post('/diaries', { diaryDate, content }),
   update: (did, content) => client.patch(`/diaries/${did}`, { content }),
   delete: (did) => client.delete(`/diaries/${did}`),
+  generateFeedback: (date) => client.post(`/diaries/${date}/feedback`),
 }
 
 export const tradeCalendarApi = {
