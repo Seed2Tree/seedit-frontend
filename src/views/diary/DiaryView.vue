@@ -214,7 +214,7 @@ onMounted(async () => {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding: 20px 20px 12px;
+  padding: 20px 16px 12px;
 }
 .page-title { font-size: 22px; font-weight: 700; color: #111; margin: 0; }
 .diary-count { font-size: 13px; color: #888; }

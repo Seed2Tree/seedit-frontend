@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStudyStore } from '@/stores/study'
 import { useHeaderStore } from '@/stores/header'
@@ -58,19 +58,18 @@ const headerStore = useHeaderStore()
 const video = computed(() => store.selectedVideo)
 const videoId = computed(() => store.videoIdFrom(video.value?.youtubeUrl))
 
-const isBookmarked = ref(false)
-function toggleBookmark() {
-  isBookmarked.value = !isBookmarked.value
-  headerStore.set({ isStarred: isBookmarked.value })
-  // TODO: API 연결 시 store.addBookmark(video.value.isid) / store.removeBookmark(video.value.isid)
+async function toggleBookmark() {
+  if (!video.value) return
+  await store.toggleBookmark(video.value.isid)
+  headerStore.set({ isStarred: store.isBookmarked(video.value.isid) })
 }
 
 onMounted(async () => {
   if (!store.selectedVideo || String(store.selectedVideo.isid) !== String(route.params.id)) {
     await store.fetchDetail(Number(route.params.id))
   }
-  // 헤더 별 버튼에 즐겨찾기 핸들러 등록
-  headerStore.set({ isStarred: isBookmarked.value, onStarClick: toggleBookmark })
+  await store.fetchBookmarkIds()
+  headerStore.set({ isStarred: store.isBookmarked(video.value?.isid), onStarClick: toggleBookmark })
 })
 </script>
 
