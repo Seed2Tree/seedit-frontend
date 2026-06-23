@@ -149,7 +149,7 @@ const filteredStocks = computed(() => {
   let list = filter.value === 'watchlist' ? marketStore.watchlistStocks : marketStore.stocks
   if (query.value.trim()) {
     const q = query.value.trim().toLowerCase()
-    list = list.filter((s) => s.companyName.toLowerCase().includes(q) || s.ticker.toLowerCase().includes(q))
+    list = list.filter((s) => s.companyName.toLowerCase().includes(q) || s.ticker.toLowerCase().includes(q) || s.searchKeywords?.toLowerCase().includes(q))
   }
   return list
 })
