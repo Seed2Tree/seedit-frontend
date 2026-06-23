@@ -57,17 +57,32 @@
         <button class="view-all" @click="goDiary">전체보기</button>
       </div>
 
-      <article v-for="d in todayDiaries" :key="d.id" class="diary-card" @click="openDiary(d)">
-        <div class="diary-top">
-          <span :class="['diary-tag', d.type === 'SELL' ? 'sell' : 'buy']">
-            {{ d.type === 'SELL' ? '매도' : '매수' }} · {{ d.stockName }}
-          </span>
-          <span class="diary-time">{{ formatTime(d.createdAt) }}</span>
-        </div>
-        <p class="diary-excerpt">{{ d.content }}</p>
-      </article>
+      <div v-if="store.isLoading" class="state-box">
+        <div class="spinner" />
+      </div>
 
-      <div v-if="!todayDiaries.length" class="diary-empty">오늘 작성한 일지가 아직 없어요.</div>
+      <div v-else-if="todayGroup" class="diary-item" @click="goToDetail(todayGroup.dateStr)">
+        <div class="group-date">{{ formatDate(todayGroup.dateStr) }}</div>
+
+        <div v-if="todayGroup.trades.length > 0" class="group-trades">
+          <div v-for="t in todayGroup.trades" :key="t.tid" class="trade-row">
+            <span :class="['trade-badge', t.tradeType === 'BUY' ? 'buy' : 'sell']">
+              {{ t.tradeType === 'BUY' ? '매수' : '매도' }}
+            </span>
+            <span class="trade-company">{{ t.companyName }}</span>
+            <span class="trade-amount">
+              {{ t.tradeType === 'SELL' ? '-' : '' }}{{ Math.abs(t.quantity) }}주 ·
+              {{ formatAmount(t.totalAmount) }}
+            </span>
+          </div>
+
+          <div v-if="todayGroup.diary" class="group-diary">📝 {{ todayGroup.diary }}</div>
+        </div>
+      </div>
+
+      <div v-else class="diary-empty empty">
+        <p>오늘 작성한 일지나 거래 기록이 없어요.</p>
+      </div>
     </div>
   </div>
 </template>
@@ -75,10 +90,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useDiaryStore } from '@/stores/diary'
 import { userApi } from '@/api/user'
-import client from '@/api/client'
+import { diaryApi } from '@/api/diary'
 
 const router = useRouter()
+const store = useDiaryStore()
 
 // --- 상태 ---
 const user = ref({ name: '', day: 0, balance: 0 })
@@ -87,9 +104,8 @@ const weeklyReturn = ref(null) // 지난주 대비 수익률(%)
 const diaries = ref([])
 
 // --- 레벨 진행도 ---
-const nextLevelPoint = 100 // TODO: 다음 레벨 기준 포인트를 API에서 받으면 교체 (ProfileView와 동일)
 const progressPercent = computed(() =>
-  Math.min(100, Math.round((level.value.point / nextLevelPoint) * 100)),
+  Math.min(100, Math.round((level.value.point / (level.value.nextLevelPoint || 1)) * 100)),
 )
 
 // --- 오늘 날짜 ---
@@ -128,14 +144,6 @@ const fortune = computed(() => {
   return fortunePool[dayOfYear % fortunePool.length]
 })
 
-// --- 오늘의 일지 ---
-const todayDiaries = computed(() => {
-  const today = new Date().toDateString()
-  return diaries.value
-    .filter((d) => d.createdAt && new Date(d.createdAt).toDateString() === today)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-})
-
 // --- 포맷 ---
 function won(n) {
   return Number(n ?? 0).toLocaleString('ko-KR')
@@ -163,9 +171,6 @@ function goDiary() {
 function goHistory() {
   router.push({ name: 'trade-history' })
 }
-function openDiary(d) {
-  router.push({ name: 'diary-detail', params: { id: d.id } })
-}
 
 // --- 데이터 로드 ---
 onMounted(async () => {
@@ -176,20 +181,78 @@ onMounted(async () => {
     const created = new Date(u.createdAt)
     const dayCount = Math.floor((Date.now() - created.getTime()) / 86400000) + 1
     user.value = { name: u.username, balance: u.balance, day: dayCount }
-    level.value = { level: u.level.level, levelName: u.level.levelName, point: u.level.point }
+    level.value = {
+      level: u.level.level,
+      levelName: u.level.levelName,
+      point: u.level.point,
+      nextLevelPoint: u.level.nextLevelPoint,
+    }
     // TODO: 지난주 대비 수익률은 별도 소스 필요 (예: 포트폴리오 요약 / balance-histories)
     weeklyReturn.value = u.weeklyReturnRate ?? null
   } catch (e) {
     // 사용자 정보 로드 실패
   }
+})
 
-  // 오늘의 일지: GET /api/diaries
-  // ⚠️ 응답 필드명(type, stockName, content, createdAt)은 백엔드 명세에 맞춰 조정
+// --- 1. 데이터 패치 함수 (비동기) ---
+async function fetchTodayData() {
   try {
-    const res = await client.get('/diaries')
+    const offset = new Date().getTimezoneOffset() * 60000
+    const todayStr = new Date(Date.now() - offset).toISOString().slice(0, 10)
+
+    // API 호출 후 state에 저장
+    const res = await diaryApi.getByDate(todayStr)
     diaries.value = Array.isArray(res.data) ? res.data : (res.data?.content ?? [])
   } catch (e) {
     diaries.value = []
+  }
+}
+
+// --- 2. 화면 표시용 데이터 가공 (동기 계산) ---
+const todayGroup = computed(() => {
+  const offset = new Date().getTimezoneOffset() * 60000
+  const todayStr = new Date(Date.now() - offset).toISOString().slice(0, 10)
+
+  // diaries.value나 store.tradeList가 바뀔 때마다 자동으로 실행됨
+  const todayDiary = diaries.value
+  const todayTrades = store.tradeList.filter((t) => t.tradeAt?.slice(0, 10) === todayStr)
+
+  // 데이터가 아예 없으면 null 반환
+  if ((!todayDiary || todayDiary.length === 0) && todayTrades.length === 0) {
+    return null
+  }
+
+  return {
+    dateStr: todayStr,
+    diary: todayDiary,
+    trades: todayTrades,
+  }
+})
+
+function goToDetail(dateStr) {
+  router.push({ name: 'diary-detail', params: { date: dateStr } })
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const [y, m, d] = dateStr.split('-')
+  const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+  const day = new Date(+y, +m - 1, +d).getDay()
+  return `${+m}월 ${+d}일 (${dayNames[day]})`
+}
+
+function formatAmount(amount) {
+  if (!amount) return ''
+  if (amount >= 100000000) return `${(amount / 100000000).toFixed(1)}억`
+  if (amount >= 10000) return `${Math.round(amount / 10000)}만원`
+  return `${amount.toLocaleString()}원`
+}
+
+onMounted(async () => {
+  try {
+    await Promise.all([store.fetchTradeList(), fetchTodayData()])
+  } catch (e) {
+    console.error('데이터 로드 실패:', e)
   }
 })
 </script>
@@ -397,6 +460,116 @@ onMounted(async () => {
   color: #6b6577;
 }
 
+/* 상태 */
+.state-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 48px 0;
+}
+.state-box.empty {
+  color: #aaa;
+  font-size: 14px;
+}
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #eee;
+  border-top-color: #7c5cff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 목록 */
+.list-header {
+  padding: 20px 16px 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  background: #f6f4ff;
+}
+.diary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 20px;
+  border-radius: 14px;
+  background: #f6f4ff;
+}
+.diary-item {
+  border: 1px solid #f0f0f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  background: #fff;
+}
+.diary-item:hover {
+  background: #fafafa;
+}
+
+/* 날짜 헤더 */
+.group-date {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 10px;
+}
+
+/* 거래 행 */
+.group-trades {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.trade-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.trade-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.trade-badge.buy {
+  background: #fdecea;
+  color: #e53935;
+}
+.trade-badge.sell {
+  background: #e8effe;
+  color: #1e6ef4;
+}
+.trade-company {
+  font-size: 13px;
+  font-weight: 600;
+  color: #222;
+  flex: 1;
+}
+.trade-amount {
+  font-size: 13px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+/* 일지 미리보기 */
+.group-diary {
+  font-size: 12px;
+  color: #888;
+  padding-top: 8px;
+  border-top: 1px solid #f5f5f5;
+  margin-top: 4px;
+}
 /* 오늘의 일지 */
 .diary-section {
   margin-top: 28px;

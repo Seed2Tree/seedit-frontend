@@ -48,7 +48,7 @@
 
     <!-- ===== 거래 리스트 (은행 거래내역 스타일) ===== -->
     <div v-else class="ledger">
-      <article v-for="t in filtered" :key="t.tid" class="ledger-row" @click="goStock(t.ticker)">
+      <article v-for="t in filtered" :key="t.tid" class="ledger-row" @click="goTradeDetail(t.tid)">
         <div class="lr-date">{{ formatDate(t.tradeAt) }}</div>
 
         <div class="lr-main">
@@ -62,10 +62,22 @@
         </div>
 
         <div class="lr-amount">
-          <div :class="['lr-delta', t.tradeType === 'SELL' ? 'plus' : 'minus']">
+          <div
+            :class="[
+              'lr-delta',
+              t.tradeType === 'SELL' ? 'plus' : 'minus',
+              { pending: isPending(t) },
+            ]"
+          >
             {{ t.tradeType === 'SELL' ? '+' : '−' }}{{ won(t.totalAmount) }}원
           </div>
-          <div class="lr-balance">{{ won(t.remainingBalance) }}원</div>
+
+          <!-- 정산 예정 매도: 잔액 대신 입금예정일 -->
+          <div v-if="isPending(t)" class="lr-settle">
+            정산예정 · {{ formatMonthDay(t.settleDate) }} 입금
+          </div>
+          <!-- 매수 / 정산 완료 매도: 거래 후 잔액 -->
+          <div v-else class="lr-balance">{{ won(t.remainingBalance) }}원</div>
         </div>
       </article>
     </div>
@@ -126,9 +138,17 @@ async function load() {
     loading.value = false
   }
 }
+function isPending(t) {
+  return t.tradeType === 'SELL' && t.settlementStatus === 'PENDING'
+}
+function formatMonthDay(d) {
+  if (!d) return ''
+  const dt = new Date(d)
+  return `${dt.getMonth() + 1}/${dt.getDate()}`
+}
 
-function goStock(ticker) {
-  router.push({ name: 'stock-detail', params: { ticker } })
+function goTradeDetail(tid) {
+  router.push({ name: 'trade-detail', params: { tid } })
 }
 function goPortfolio() {
   router.push({ name: 'portfolio' })
@@ -144,10 +164,14 @@ function signed(n) {
   const sign = n >= 0 ? '+' : '−'
   return `${sign}${Math.abs(n).toLocaleString('ko-KR')}`
 }
+function formatDay(value) {
+  const formatdays = { 0: '일', 1: '월', 2: '화', 3: '수', 4: '목', 5: '금', 6: '토' }
+  return formatdays[value]
+}
 function formatDate(iso) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
-  return `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+  return `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}(${formatDay(d.getDay())}) ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 onMounted(load)
@@ -273,16 +297,17 @@ onMounted(load)
   background: #faf9fd;
 }
 .lr-date {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #a8a2b5;
-  width: 38px;
+  width: 40px;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
 .lr-main {
   flex: 1 0 0;
   min-width: 0;
+  padding: 0px 10px;
 }
 .lr-title {
   font-size: 15px;
@@ -336,7 +361,15 @@ onMounted(load)
   margin-top: 3px;
   font-variant-numeric: tabular-nums;
 }
-
+/* 정산 전 매도금액은 흐리게 — "아직 안 들어옴" 신호 */
+.lr-delta.pending {
+  color: #b0aab8;
+}
+.lr-settle {
+  font-size: 10px;
+  font-weight: 600;
+  color: #e53935;
+}
 /* 상태 */
 .state-box {
   display: flex;

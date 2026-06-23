@@ -1,5 +1,6 @@
 <template>
   <div class="page">
+    <BaseToast ref="toast" />
     <div class="content">
       <form class="form" @submit.prevent="onSave">
         <div class="field">
@@ -65,9 +66,6 @@
           </div>
           <div v-if="mismatch" class="alert alert--err">비밀번호가 일치하지 않아요.</div>
         </div>
-
-        <p v-if="error" class="error">{{ error }}</p>
-        <p v-if="done" class="success">✓ 비밀번호가 변경되었어요.</p>
       </form>
     </div>
 
@@ -81,19 +79,17 @@
 </template>
 
 <script setup>
-import { authApi } from '@/api/auth'
 import { userApi } from '@/api/user'
 import { Eye, EyeOff } from 'lucide-vue-next'
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import BaseToast from '@/components/BaseToast.vue'
 
 const router = useRouter()
 const loading = ref(false)
 const error = ref('')
 const done = ref(false)
-
-const form = reactive({ username: '', name: '', email: '', avatarUrl: '' })
-const original = ref({})
+const toast = ref(null)
 
 const currentPassword = ref('')
 const newPassword = ref('')
@@ -121,19 +117,22 @@ const canSubmit = computed(
 async function onSubmit() {
   if (!canSubmit.value || loading.value) return
   loading.value = true
-  error.value = ''
   done.value = false
   try {
     // TODO: await authApi.changePassword({ currentPassword: currentPassword.value, newPassword: newPassword.value })
-    done.value = true
-    await userApi.changePassword({
-      // currentPassword: currentPassword.value,
+    const res = await userApi.changePassword({
+      curPassword: currentPassword.value,
       newPassword: newPassword.value,
     })
+
+    done.value = true
+    toast.value.show('✓ 비밀번호가 변경되었어요.')
     setTimeout(() => router.back(), 800)
   } catch (e) {
     // 현재 비밀번호 불일치(보통 400/401) 등
-    error.value = e.response?.data?.message || '현재 비밀번호가 올바르지 않거나 변경에 실패했어요.'
+    toast.value.show(
+      e.response?.data?.error?.message || '현재 비밀번호가 올바르지 않거나 변경에 실패했어요.',
+    )
   } finally {
     loading.value = false
   }
