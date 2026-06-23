@@ -20,7 +20,7 @@
     </div>
 
     <!-- 내 모의자산 -->
-    <div class="asset-card">
+    <div class="asset-card" @click="goHistory">
       <div class="asset-label">내 모의자산</div>
       <div class="asset-value">{{ won(user.balance) }}원</div>
       <div class="asset-sub">
@@ -30,8 +30,8 @@
         <span class="asset-caption">지난주 대비</span>
       </div>
       <div class="asset-actions">
-        <button class="asset-btn ghost" @click="goPortfolio">보유종목</button>
-        <button class="asset-btn solid" @click="goDiary">일지 쓰기</button>
+        <button class="asset-btn ghost" @click.stop="goPortfolio">보유종목</button>
+        <button class="asset-btn solid" @click.stop="goDiary">일지 쓰기</button>
       </div>
     </div>
 
@@ -160,6 +160,9 @@ function goPortfolio() {
 function goDiary() {
   router.push({ name: 'diary' })
 }
+function goHistory() {
+  router.push({ name: 'trade-history' })
+}
 function openDiary(d) {
   router.push({ name: 'diary-detail', params: { id: d.id } })
 }
@@ -279,6 +282,11 @@ onMounted(async () => {
   background: linear-gradient(135deg, #8b6dff, #7c5cff);
   color: #fff;
   box-shadow: 0 10px 24px rgba(124, 92, 255, 0.28);
+  cursor: pointer;
+  transition: transform 0.08s;
+}
+.asset-card:active {
+  transform: scale(0.99);
 }
 .asset-label {
   font-size: 13px;

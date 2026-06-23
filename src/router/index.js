@@ -57,6 +57,7 @@ const router = createRouter({
           path: 'home/portfolio',
           name: 'portfolio',
           component: () => import('@/views/home/PortfolioView.vue'),
+          meta: { header: { title: '보유 종목', backMode: true } },
         },
         {
           // F06: 보유 종목 개별 상세
@@ -82,6 +83,13 @@ const router = createRouter({
           path: 'home/report/portfolio',
           name: 'report-portfolio',
           component: () => import('@/views/home/PortfolioReportView.vue'),
+        },
+        // ── 투자 거래 내역 (홈 모의자산 카드에서 진입) ─────────────────────────────────────────
+        {
+          path: 'home/trades',
+          name: 'trade-history',
+          component: () => import('@/views/home/TradeHistoryView.vue'),
+          meta: { header: { title: '거래 내역', backMode: true } },
         },
 
         // ── 투자종목 탭 ───────────────────────────────────

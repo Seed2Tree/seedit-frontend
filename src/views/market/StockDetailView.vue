@@ -190,10 +190,41 @@
       </template>
 
       <!-- ============ 뉴스 탭 ============ -->
-      <template v-else>
-        <div class="state-box">
-          <p>뉴스 기능은 준비 중이에요 📰</p>
+      <template v-else-if="activeTab === 'news'">
+        <!-- 로딩 -->
+        <div v-if="newsLoading" class="state-box">
+          <div class="spinner" />
+          <p>뉴스를 불러오는 중...</p>
         </div>
+
+        <!-- 빈 상태 -->
+        <div v-else-if="!news.length" class="state-box">
+          <p>관련 뉴스가 아직 없어요 📰</p>
+        </div>
+
+        <!-- 리스트 -->
+        <div v-else class="news-list">
+          <a
+            v-for="item in news"
+            :key="item.nid"
+            class="news-item"
+            :href="item.newsUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div class="news-title">{{ item.newsTitle }}</div>
+            <div class="news-meta">
+              <span class="news-press">{{ item.press }}</span>
+              <span class="news-dot">·</span>
+              <span class="news-time">{{ formatNewsTime(item.publishedAt) }}</span>
+            </div>
+          </a>
+        </div>
+      </template>
+
+      <!-- ============ AI 분석 탭 ============ -->
+      <template v-else-if="activeTab === 'ai'">
+        <AiAnalysisTab :ticker="ticker" />
       </template>
 
       <div class="detail-bottom-spacer" />
@@ -202,10 +233,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { stocksApi } from '@/api/stocks'
 import { useStocksStore } from '@/stores/stocks'
+import { newsApi } from '@/api/news'
+import AiAnalysisTab from '@/components/AiAnalysisTab.vue'
 import { useHeaderStore } from '@/stores/header'
 
 const router = useRouter()
@@ -220,11 +253,15 @@ const isLoading = ref(false)
 const error = ref(false)
 const activeTab = ref('summary')
 const selectedPeriod = ref('1m')
+const news = ref([])
+const newsLoaded = ref(false)
+const newsLoading = ref(false)
 
 const tabs = [
   { label: '종합', value: 'summary' },
   { label: '차트', value: 'chart' },
   { label: '뉴스', value: 'news' },
+  { label: 'AI 분석', value: 'ai' },
 ]
 
 const periods = [
@@ -319,6 +356,16 @@ function formatDateLabel(dateStr, period) {
   return `${d.getMonth() + 1}월`
 }
 
+function formatNewsTime(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  const diffMin = Math.floor((Date.now() - d.getTime()) / 60000)
+  if (diffMin < 1) return '방금 전'
+  if (diffMin < 60) return `${diffMin}분 전`
+  if (diffMin < 1440) return `${Math.floor(diffMin / 60)}시간 전`
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`
+}
+
 async function loadData() {
   isLoading.value = true
   error.value = false
@@ -402,6 +449,25 @@ function formatMarketCap(n) {
   return n.toLocaleString('ko-KR') + '억'
 }
 
+async function loadNews() {
+  if (newsLoaded.value || newsLoading.value) return // 중복 호출 방지
+  newsLoading.value = true
+  try {
+    const res = await newsApi.getAllByCompanyName(stock.value.companyName)
+    news.value = res.data
+    console.log(news.value)
+    newsLoaded.value = true
+  } catch (e) {
+    // 실패 시 newsLoaded 는 false
+  } finally {
+    newsLoading.value = false
+  }
+}
+
+watch(activeTab, (tab) => {
+  if (tab === 'news') loadNews()
+})
+
 onMounted(() => {
   loadData()
   // 관심종목 표시를 위해 목록 데이터가 없으면 로드
@@ -420,7 +486,6 @@ watch(isWatched, (val) => headerStore.set({ isStarred: val }))
   background: #ffffff;
   padding-bottom: 40px;
 }
-
 
 /* 현재가 헤더 */
 .price-section {
@@ -716,5 +781,52 @@ watch(isWatched, (val) => headerStore.set({ isStarred: val }))
   font-weight: 700;
   border: none;
   cursor: pointer;
+}
+
+/* 뉴스 */
+.news-list {
+  padding: 8px 16px 0;
+}
+.news-item {
+  display: block;
+  padding: 16px 4px;
+  border-bottom: 1px solid #efedf4;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+.news-item:last-child {
+  border-bottom: none;
+}
+.news-item:hover {
+  background: #efedf4;
+}
+.news-item:active {
+  background: #f7f6fb;
+}
+.news-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #1e1a2e;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.news-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a8a2b5;
+}
+.news-press {
+  color: #7c5cff;
+  font-weight: 700;
+}
+.news-dot {
+  color: #d4d0dd;
 }
 </style>
