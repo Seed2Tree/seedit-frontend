@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Star } from 'lucide-vue-next'
 import { useStudyStore, CATEGORIES } from '@/stores/study'
@@ -108,6 +108,14 @@ onMounted(async () => {
   }
 })
 
+const featuredIndex = ref(0)
+
+watch(() => store.videos, (videos) => {
+  if (videos.length > 0) {
+    featuredIndex.value = Math.floor(Math.random() * videos.length)
+  }
+})
+
 const filtered = computed(() => {
   if (showBookmarks.value) {
     return store.bookmarks.filter((v) => store.isBookmarked(v.isid))
@@ -117,11 +125,16 @@ const filtered = computed(() => {
   return store.videos.filter((v) => v.title.toLowerCase().includes(q))
 })
 
-const featured = computed(() => filtered.value[0] ?? null)
+const featured = computed(() => {
+  if (showBookmarks.value || query.value) return null
+  return store.videos[featuredIndex.value] ?? null
+})
 
-const listVideos = computed(() =>
-  (!query.value && !showBookmarks.value) ? filtered.value.slice(1) : filtered.value
-)
+const listVideos = computed(() => {
+  if (showBookmarks.value || query.value) return filtered.value
+  const featuredIsid = featured.value?.isid
+  return filtered.value.filter((v) => v.isid !== featuredIsid)
+})
 
 function onCategoryChange(cat) {
   query.value = ''
