@@ -2,7 +2,7 @@
   <div class="study-page">
 
     <div class="study-header">
-      <h1 class="page-title">투자 공부</h1>
+      <h1 class="page-title">투자공부</h1>
 
       <!-- 검색바 -->
       <div class="search-wrap">

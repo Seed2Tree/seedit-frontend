@@ -100,9 +100,26 @@
 
         <!-- 종목 리스트 -->
         <div class="list-section">
-          <p class="section-label">
-            {{ query ? `'${query}' 검색 결과` : filter === 'watchlist' ? '관심종목' : '전체 종목' }}
-          </p>
+          <div class="section-head">
+            <p class="section-label">
+              {{ query ? `'${query}' 검색 결과` : filter === 'watchlist' ? '관심종목' : '전체 종목' }}
+            </p>
+            <div class="sort-wrap">
+              <div class="sort-dropdown" ref="dropdownRef">
+                <button class="sort-btn" @click="isDropdownOpen = !isDropdownOpen">
+                  {{ sortLabel }} <span class="sort-arrow">▾</span>
+                </button>
+                <div v-if="isDropdownOpen" class="sort-menu">
+                  <button :class="['sort-option', { active: sortKey === 'volume' }]" @click="selectSort('volume')">거래량순</button>                  
+                  <button :class="['sort-option', { active: sortKey === 'name' }]" @click="selectSort('name')">이름순</button>
+                  <button :class="['sort-option', { active: sortKey === 'rate' }]" @click="selectSort('rate')">증감률순</button>
+                </div>
+              </div>
+              <button class="sort-dir-btn" @click="sortAsc = !sortAsc">
+                {{ sortAsc ? '↑' : '↓' }}
+              </button>
+            </div>
+          </div>
           <div class="stock-list">
             <button
               v-for="stock in filteredStocks"
@@ -135,7 +152,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStocksStore } from '@/stores/stocks'
 
@@ -144,12 +161,41 @@ const marketStore = useStocksStore()
 
 const query = ref('')
 const filter = ref('all')
+const sortKey = ref('volume') // 'name' | 'rate' | 'volume'
+const sortAsc = ref(false)
+const isDropdownOpen = ref(false)
+const dropdownRef = ref(null)
+
+const sortLabel = computed(() => {
+  if (sortKey.value === 'rate') return '증감률순'
+  if (sortKey.value === 'name') return '이름순'
+  return '거래량순'
+})
+
+function selectSort(key) {
+  sortKey.value = key
+  isDropdownOpen.value = false
+}
+
+function handleClickOutside(e) {
+  if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
+    isDropdownOpen.value = false
+  }
+}
 
 const filteredStocks = computed(() => {
-  let list = filter.value === 'watchlist' ? marketStore.watchlistStocks : marketStore.stocks
+  let list = [...(filter.value === 'watchlist' ? marketStore.watchlistStocks : marketStore.stocks)]
   if (query.value.trim()) {
     const q = query.value.trim().toLowerCase()
     list = list.filter((s) => s.companyName.toLowerCase().includes(q) || s.ticker.toLowerCase().includes(q) || s.searchKeywords?.toLowerCase().includes(q))
+  }
+  const dir = sortAsc.value ? 1 : -1
+  if (sortKey.value === 'rate') {
+    list.sort((a, b) => dir * ((a.changeRate ?? -Infinity) - (b.changeRate ?? -Infinity)))
+  } else if (sortKey.value === 'volume') {
+    list.sort((a, b) => dir * ((a.volume ?? 0) - (b.volume ?? 0)))
+  } else {
+    list.sort((a, b) => dir * a.companyName.localeCompare(b.companyName, 'ko'))
   }
   return list
 })
@@ -185,6 +231,11 @@ function onLogoError(e, companyName) {
 
 onMounted(() => {
   marketStore.fetchList()
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -399,6 +450,87 @@ onMounted(() => {
 /* ── 종목 리스트 ── */
 .list-section {
   padding: 20px 16px 0;
+}
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.section-head .section-label {
+  margin: 0;
+}
+.sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sort-dropdown {
+  position: relative;
+}
+.sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sort-arrow {
+  font-size: 10px;
+  color: #aaa;
+}
+.sort-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #fff;
+  border: 1.5px solid #eee;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 10;
+  min-width: 100px;
+}
+.sort-option {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+}
+.sort-option:hover {
+  background: #f8f8f8;
+}
+.sort-option.active {
+  color: #7c5cff;
+  font-weight: 700;
+}
+.sort-dir-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 .stock-list {
   background: #fff;
