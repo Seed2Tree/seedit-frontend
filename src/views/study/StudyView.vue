@@ -2,7 +2,7 @@
   <div class="study-page">
 
     <div class="study-header">
-      <h1 class="page-title">투자 공부</h1>
+      <h1 class="page-title">투자공부</h1>
 
       <!-- 검색바 -->
       <div class="search-wrap">
@@ -17,9 +17,17 @@
       <!-- 카테고리 탭 -->
       <div class="category-tabs">
         <button
-          v-for="cat in CATEGORIES"
+          :class="['cat-tab', { active: !showBookmarks && store.selectedCategory === '전체' }]"
+          @click="onCategoryChange('전체')"
+        >전체</button>
+        <button
+          :class="['cat-tab', { active: showBookmarks }]"
+          @click="onShowBookmarks"
+        >⭐ 저장</button>
+        <button
+          v-for="cat in CATEGORIES.slice(1)"
           :key="cat"
-          :class="['cat-tab', { active: store.selectedCategory === cat }]"
+          :class="['cat-tab', { active: !showBookmarks && store.selectedCategory === cat }]"
           @click="onCategoryChange(cat)"
         >{{ cat }}</button>
       </div>
@@ -40,13 +48,13 @@
     <template v-else>
       <!-- 영상 없음 -->
       <div v-if="filtered.length === 0" class="state-box">
-        <p>{{ query ? `'${query}' 검색 결과가 없어요` : '해당 카테고리에 영상이 없어요' }}</p>
+        <p>{{ showBookmarks ? '저장한 콘텐츠가 없어요' : query ? `'${query}' 검색 결과가 없어요` : '해당 카테고리에 영상이 없어요' }}</p>
       </div>
 
       <template v-else>
-        <!-- 오늘의 추천 카드 (검색 중이 아닐 때만) -->
+        <!-- 오늘의 추천 카드 (검색·관심 탭 아닐 때만) -->
         <div
-          v-if="!query && featured"
+          v-if="!query && !showBookmarks && featured"
           class="featured-card"
           :style="{ backgroundImage: `url(${featured.thumbnail})` }"
           @click="goDetail(featured)"
@@ -69,8 +77,8 @@
               <p class="item-title">{{ video.title }}</p>
               <span class="item-meta">머니인사이드 · {{ video.category }}</span>
             </div>
-            <button class="star-btn" @click.stop>
-              <Star :size="18" color="#ccc" />
+            <button class="star-btn" @click.stop="store.toggleBookmark(video.isid)">
+              <Star :size="18" :color="store.isBookmarked(video.isid) ? '#FFD700' : '#ccc'" />
             </button>
           </div>
         </div>
@@ -81,34 +89,63 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Star } from 'lucide-vue-next'
 import { useStudyStore, CATEGORIES } from '@/stores/study'
 
 const store = useStudyStore()
 const router = useRouter()
+const route = useRoute()
 const query = ref('')
+const showBookmarks = ref(false)
 
-onMounted(() => {
+onMounted(async () => {
   store.fetchList()
+  await store.fetchBookmarkIds()
+  if (route.query.tab === 'bookmarks') {
+    await onShowBookmarks()
+  }
+})
+
+const featuredIndex = ref(0)
+
+watch(() => store.videos, (videos) => {
+  if (videos.length > 0) {
+    featuredIndex.value = Math.floor(Math.random() * videos.length)
+  }
 })
 
 const filtered = computed(() => {
+  if (showBookmarks.value) {
+    return store.bookmarks.filter((v) => store.isBookmarked(v.isid))
+  }
   if (!query.value) return store.videos
   const q = query.value.toLowerCase()
   return store.videos.filter((v) => v.title.toLowerCase().includes(q))
 })
 
-// 오늘의 추천: 목록 첫 번째 영상
-const featured = computed(() => filtered.value[0] ?? null)
+const featured = computed(() => {
+  if (showBookmarks.value || query.value) return null
+  return store.videos[featuredIndex.value] ?? null
+})
 
-// 추천 카드 제외한 나머지 목록
-const listVideos = computed(() => (query.value ? filtered.value : filtered.value.slice(1)))
+const listVideos = computed(() => {
+  if (showBookmarks.value || query.value) return filtered.value
+  const featuredIsid = featured.value?.isid
+  return filtered.value.filter((v) => v.isid !== featuredIsid)
+})
 
 function onCategoryChange(cat) {
   query.value = ''
+  showBookmarks.value = false
   store.fetchList(cat)
+}
+
+async function onShowBookmarks() {
+  showBookmarks.value = true
+  query.value = ''
+  await store.fetchBookmarks()
 }
 
 function goDetail(video) {
@@ -174,21 +211,22 @@ function goDetail(video) {
   overflow-x: auto;
   padding-bottom: 8px;
 
-  /* Firefox: 얇은 스크롤바 + 색상 지정 */
   scrollbar-width: thin;
   scrollbar-color: #ddd transparent;
 }
 
-/* Chrome / Safari / Edge (웹킷 계열): 스크롤바 커스텀 */
 .category-tabs::-webkit-scrollbar { height: 3px; }
-.category-tabs::-webkit-scrollbar-button { display: none; } /* 양쪽 끝 화살표 버튼 제거 */
+.category-tabs::-webkit-scrollbar-button { display: none; }
 .category-tabs::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
 .category-tabs::-webkit-scrollbar-track { background: transparent; }
 
 .cat-tab {
   flex-shrink: 0;
-  padding: 7px 16px;
-  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 9999px;
   border: 1.5px solid #ddd;
   background: #fff;
   color: #555;
@@ -250,7 +288,6 @@ function goDetail(video) {
 }
 .featured-card:active { transform: scale(0.98); }
 
-/* 레이어 1: 어두운 오버레이 — 썸네일 위에 깔아서 텍스트 가독성 확보 */
 .featured-card::before {
   content: '';
   position: absolute;
@@ -258,7 +295,6 @@ function goDetail(video) {
   background: rgba(0, 0, 0, 0.7);
 }
 
-/* 레이어 2: 빛 반사 — 유리가 빛을 받는 느낌 */
 .featured-card::after {
   content: '';
   position: absolute;
@@ -271,7 +307,6 @@ function goDetail(video) {
   );
 }
 
-/* 텍스트는 ::before / ::after 위에 표시되도록 z-index 지정 */
 .featured-tag,
 .featured-title,
 .featured-meta {

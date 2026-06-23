@@ -57,13 +57,14 @@
         <button class="view-all" @click="onViewAll">전체보기</button>
       </div>
       <div class="saved-scroll">
+        <div v-if="savedPosts.length === 0" class="saved-empty">저장한 콘텐츠가 없어요</div>
         <article
           v-for="post in savedPosts"
-          :key="post.id"
+          :key="post.isid"
           class="saved-card"
           @click="onOpenPost(post)"
         >
-          <div class="saved-thumb" :style="{ background: post.bg }"></div>
+          <img :src="post.thumbnail" :alt="post.title" class="saved-thumb" />
           <p class="saved-title">{{ post.title }}</p>
         </article>
       </div>
@@ -95,6 +96,7 @@ import { useRouter } from 'vue-router'
 import { Sprout, Pencil, Lock, ChevronRight } from 'lucide-vue-next'
 import { authApi } from '@/api/auth'
 import { userApi } from '@/api/user'
+import { studyApi } from '@/api/study'
 
 const router = useRouter()
 const appVersion = '1.0.0'
@@ -114,24 +116,16 @@ function won(n) {
   return Number(n ?? 0).toLocaleString('ko-KR')
 }
 
-const savedPosts = ref([
-  {
-    id: 1,
-    title: '학생 투자자가 자주 하는 실수 5가지',
-    bg: 'linear-gradient(135deg,#a78bfa,#c7b6fd)',
-  },
-  { id: 2, title: '코스피 2,700 회복 외국인 매수', bg: 'linear-gradient(135deg,#fbb36b,#fcd6ad)' },
-  { id: 3, title: 'AI 반도체 다음 사이클은 언제?', bg: 'linear-gradient(135deg,#7ee0a0,#bff3cf)' },
-])
+const savedPosts = ref([])
 
 function onEdit() {
   router.push('/mypage/settings')
 }
 function onViewAll() {
-  router.push({ name: 'saved-posts' })
+  router.push({ name: 'study', query: { tab: 'bookmarks' } })
 }
 function onOpenPost(post) {
-  router.push({ name: 'post', params: { id: post.id } })
+  router.push({ name: 'study-detail', params: { id: post.isid } })
 }
 function onChangePassword() {
   router.push('/mypage/password')
@@ -164,6 +158,13 @@ async function onWithdraw() {
 
 onMounted(async () => {
   try {
+    const bookmarkRes = await studyApi.getBookmarks()
+    savedPosts.value = bookmarkRes.data
+  } catch {
+    savedPosts.value = []
+  }
+
+  try {
     const res = await userApi.getMe()
     const u = res.data
 
@@ -179,7 +180,7 @@ onMounted(async () => {
     }
     level.value = { level: u.level.level, levelName: u.level.levelName, point: u.level.point }
     stats.value = { ...u.activity }
-  } catch (e) {
+  } catch {
     error.value = '프로필을 불러오지 못했어요.'
   }
 })
@@ -187,7 +188,7 @@ onMounted(async () => {
 
 <style scoped>
 .profile {
-  padding: 8px 20px 32px;
+  padding: 20px 16px 32px;
   color: #1e1a2e;
   font-family: Pretendard;
 }
@@ -196,7 +197,7 @@ onMounted(async () => {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  margin: 8px 0 16px;
+  margin: 0 0 14px;
 }
 
 /* 대시보드 카드 */
@@ -343,8 +344,8 @@ onMounted(async () => {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  margin: 0 -20px;
-  padding: 0 20px 4px;
+  margin: 0 -16px;
+  padding: 0 16px 4px;
   scrollbar-width: none;
 }
 .saved-scroll::-webkit-scrollbar {
@@ -360,12 +361,17 @@ onMounted(async () => {
   gap: var(--item-spacing-7_27, 7.275px);
 }
 .saved-thumb {
-  display: flex;
+  width: 100%;
   height: 100px;
-  justify-content: center;
-  align-items: center;
-  align-self: stretch;
+  object-fit: cover;
   border-radius: 14px;
+  background: #eee;
+}
+
+.saved-empty {
+  font-size: 13px;
+  color: #bbb;
+  padding: 12px 0;
 }
 .saved-title {
   font-size: 13px;
