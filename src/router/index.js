@@ -91,6 +91,11 @@ const router = createRouter({
           component: () => import('@/views/home/TradeHistoryView.vue'),
           meta: { header: { title: '거래 내역', backMode: true } },
         },
+        {
+          path: 'home/trades/:tid',
+          name: 'trade-detail',
+          component: () => import('@/views/home/TradeDetailView.vue'),
+        },
 
         // ── 투자종목 탭 ───────────────────────────────────
         {

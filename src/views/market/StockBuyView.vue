@@ -1,5 +1,6 @@
 <template>
   <div class="buyview">
+    <BaseToast ref="toast" />
     <div class="container">
       <!-- 종목 소개 -->
       <div class="intro">
@@ -99,10 +100,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { tradesApi } from '@/api/trades'
+import BaseToast from '@/components/BaseToast.vue'
 
 const router = useRouter()
 const route = useRoute()
 const ticker = route.params.ticker
+const toast = ref(null)
 
 // --- 상태 ---
 const company = ref({ name: '', ticker: '', market: '', sector: '' })
@@ -163,6 +166,8 @@ function onCancel() {
 
 async function onSubmit() {
   if (!canSubmit.value) return
+  if (!selectedTag.value) return toast.value.show('최소 1개 이상의 가설 태그를 선택해주세요.')
+
   try {
     // F02 모의 매수 + F03 투자 가설 작성
     // ⚠️ 필드명은 백엔드 /api/trades/buy, /api/reasons 명세에 맞춰 조정 필요
@@ -178,7 +183,7 @@ async function onSubmit() {
 
     router.replace({ name: 'portfolio-detail', params: { ticker } })
   } catch (e) {
-    alert('매수에 실패했어요. 잠시 후 다시 시도해주세요.')
+    toast.value.show(e.response?.data?.message || '매수에 실패했어요. 잠시 후 다시 시도해주세요.')
   }
 }
 

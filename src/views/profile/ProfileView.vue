@@ -77,6 +77,23 @@
       <ChevronRight :size="20" class="menu-chevron" />
     </button>
 
+    <ConfirmDangerModal
+      v-model="resetModal"
+      title="계정 초기화"
+      message="거래·일지·관심종목 기록이 모두 삭제되고 초기 자산으로 돌아가요. 되돌릴 수 없어요."
+      :confirmPhrase="`${user.name} 계정 초기화`"
+      confirmLabel="초기화"
+      @confirm="doResetAccount"
+    />
+    <ConfirmDangerModal
+      v-model="withdrawModal"
+      title="회원 탈퇴"
+      message="모든 데이터가 삭제되고 계정이 사라져요. 되돌릴 수 없어요."
+      :confirmPhrase="`${user.name} 회원탈퇴`"
+      confirmLabel="탈퇴"
+      @confirm="doWithdraw"
+    />
+
     <!-- 푸터 액션 -->
     <div class="footer-actions">
       <div class="footer-left">
@@ -97,19 +114,21 @@ import { Sprout, Pencil, Lock, ChevronRight } from 'lucide-vue-next'
 import { authApi } from '@/api/auth'
 import { userApi } from '@/api/user'
 import { studyApi } from '@/api/study'
+import ConfirmDangerModal from '@/components/ConfirmDangerModal.vue'
 
 const router = useRouter()
 const appVersion = '1.0.0'
 const error = ref('')
+const resetModal = ref(false)
+const withdrawModal = ref(false)
 
 // 기본값으로 초기화 → 데이터 로드 전에도 템플릿이 안 깨짐
 const user = ref({ name: '', day: 0, balance: 0, totalInvested: 0 })
 const level = ref({ level: 1, levelName: '', point: 0 })
 const stats = ref({ diaryCount: 0, transactionCount: 0, watchlistCount: 0, studyBookmarkCount: 0 })
 
-const nextLevelPoint = 100 // TODO: 다음 레벨 기준 포인트를 API에서 받으면 교체
 const progressPercent = computed(() =>
-  Math.min(100, Math.round((level.value.point / nextLevelPoint) * 100)),
+  Math.min(100, Math.round((level.value.point / (level.value.nextLevelPoint || 1)) * 100)),
 )
 
 function won(n) {
@@ -130,6 +149,34 @@ function onOpenPost(post) {
 function onChangePassword() {
   router.push('/mypage/password')
 }
+function onResetAccount() {
+  resetModal.value = true
+}
+function onWithdraw() {
+  withdrawModal.value = true
+}
+
+// 모달에서 문구 일치 + 확인 눌렀을 때 실제 실행
+async function doResetAccount() {
+  try {
+    await userApi.resetAccount() // ← 백엔드 신설 필요(아래)
+  } catch (e) {
+    // 실패 토스트 등
+  } finally {
+    router.replace('home')
+  }
+}
+
+async function doWithdraw() {
+  try {
+    await userApi.deleteprofile()
+  } catch (e) {
+    // 무시
+  } finally {
+    onLogout()
+  }
+}
+
 async function onLogout() {
   try {
     await authApi.logout()
@@ -139,20 +186,6 @@ async function onLogout() {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('user')
     router.push({ name: 'login' })
-  }
-}
-function onResetAccount() {
-  if (!confirm('정말 계정을 초기화할까요? 거래/일지 기록이 모두 사라져요.')) return
-  // TODO: 계정 초기화 API 호출
-}
-async function onWithdraw() {
-  if (!confirm('정말 탈퇴하시겠어요? 되돌릴 수 없어요.')) return
-  try {
-    await userApi.deleteprofile()
-  } catch (e) {
-    // 무시하고 로그아웃 처리
-  } finally {
-    onLogout()
   }
 }
 
@@ -178,7 +211,12 @@ onMounted(async () => {
       totalInvested: u.totalInvested,
       day: dayCount,
     }
-    level.value = { level: u.level.level, levelName: u.level.levelName, point: u.level.point }
+    level.value = {
+      level: u.level.level,
+      levelName: u.level.levelName,
+      point: u.level.point,
+      nextLevelPoint: u.level.nextLevelPoint,
+    }
     stats.value = { ...u.activity }
   } catch {
     error.value = '프로필을 불러오지 못했어요.'
