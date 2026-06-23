@@ -78,7 +78,7 @@
               <span class="item-meta">머니인사이드 · {{ video.category }}</span>
             </div>
             <button class="star-btn" @click.stop="store.toggleBookmark(video.isid)">
-              <Star :size="18" :color="store.isBookmarked(video.isid) ? '#FFD700' : '#ccc'" />
+              <Star :size="18" :color="store.isBookmarked(video.isid) ? '#FFD700' : '#ccc'" :fill="store.isBookmarked(video.isid) ? '#FFD700' : 'none'" />
             </button>
           </div>
         </div>
