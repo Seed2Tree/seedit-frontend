@@ -26,16 +26,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { Clock } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
-
+import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
-const username = ref('')
-username.value = '새싹이'
+const route = useRoute()
+const username = computed(() => route.query.username)
 
 const onClick = () => {
-  router.push('/login')
+  router.replace('/login')
 }
 </script>
 

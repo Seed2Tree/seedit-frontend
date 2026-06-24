@@ -455,7 +455,6 @@ async function loadNews() {
   try {
     const res = await newsApi.getAllByCompanyName(stock.value.companyName)
     news.value = res.data
-    console.log(news.value)
     newsLoaded.value = true
   } catch (e) {
     // 실패 시 newsLoaded 는 false

@@ -9,7 +9,14 @@
       <form class="form" @submit.prevent="onSubmit">
         <div class="field">
           <label class="label">이름</label>
-          <input v-model="form.name" class="input" placeholder="이름을 입력해주세요." />
+          <input
+            v-model="form.name"
+            class="input"
+            placeholder="이름을 입력해주세요."
+            @blur="checkName"
+            @compositionend="checkName"
+          />
+          <p v-if="nameError" class="error">{{ nameError }}</p>
         </div>
 
         <div class="field">
@@ -135,6 +142,23 @@ const passwordMismatch = computed(
   () => passwordConfirm.value !== '' && form.password !== passwordConfirm.value,
 )
 
+const NAME_RE = /^[가-힣]{2,}$/
+
+function validateName(name) {
+  const v = name.trim()
+  if (!v) return '이름을 입력해주세요.'
+  if (/[\u3131-\u3163]/.test(v)) {
+    return '완성되지 않은 한글이 포함되어 있어요.' // ㅇ, ㅏ 등
+  }
+  if (v.length < 2) return '이름을 2자 이상 입력해주세요.'
+  return ''
+}
+const nameError = ref('')
+
+function checkName() {
+  nameError.value = validateName(form.name)
+}
+
 const birthFilled = computed(() => /^\d{4}$/.test(birthY.value) && !!birthM.value && !!birthD.value)
 const birth = computed(() =>
   birthFilled.value
@@ -156,6 +180,7 @@ const age = computed(() => {
 const canSubmit = computed(
   () =>
     form.name.trim() !== '' &&
+    !validateName(form.name) &&
     emailChecked.value === true &&
     passwordValid.value &&
     passwordConfirm.value !== '' &&
@@ -199,7 +224,7 @@ async function onSubmit() {
   loading.value = true
   try {
     await authApi.signup({ ...form, birth: birth.value })
-    router.push('/signup/complete')
+    router.replace({ path: '/signup/complete', query: { username: form.username } })
   } catch (e) {
     error.value = e.response?.data?.message || '회원가입에 실패했어요.'
   } finally {

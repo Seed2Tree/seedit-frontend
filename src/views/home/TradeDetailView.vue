@@ -217,12 +217,12 @@ onMounted(load)
   font-weight: 700;
 }
 .type-badge.buy {
-  background: #e8f0fe;
-  color: #1a73e8;
-}
-.type-badge.sell {
   background: #fdecec;
   color: #e5484d;
+}
+.type-badge.sell {
+  background: #e8f0fe;
+  color: #1a73e8;
 }
 
 .row {
