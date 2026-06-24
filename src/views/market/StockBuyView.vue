@@ -4,7 +4,15 @@
     <div class="container">
       <!-- 종목 소개 -->
       <div class="intro">
-        <div class="company-img">{{ companyInitial }}</div>
+        <div :class="['stock-icon']">
+          <img
+            :src="logoUrl(ticker)"
+            class="stock-avatar"
+            :alt="company?.name?.slice(0, 2)"
+            @error="(e) => onLogoError(e, company?.name)"
+          />
+        </div>
+        <!-- <div class="company-img">{{ companyInitial }}</div> -->
         <div class="company-container">
           <div class="company-title">{{ company?.name }}</div>
           <div class="company-desc">{{ company?.ticker }}·{{ company?.market }}</div>
@@ -125,7 +133,6 @@ const reasonTags = [
 ]
 
 // --- 계산값 ---
-const companyInitial = computed(() => company.value.name?.charAt(0) ?? '')
 const maxShares = computed(() =>
   currentPrice.value > 0 ? Math.floor(balance.value / currentPrice.value) : 0,
 )
@@ -162,6 +169,16 @@ function formatNumber(n) {
 
 function onCancel() {
   router.back()
+}
+
+function logoUrl(ticker) {
+  return `https://file.alphasquare.co.kr/media/images/stock_logo/kr/${ticker}.png`
+}
+
+function onLogoError(e, companyName) {
+  const initials = companyName?.slice(0, 2)
+  e.target.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' rx='12' fill='%23ede9ff'/><text x='50%25' y='50%25' font-family='sans-serif' font-size='13' font-weight='800' fill='%237c5cff' text-anchor='middle' dominant-baseline='central'>${initials}</text></svg>`
+  e.target.onerror = null
 }
 
 async function onSubmit() {
@@ -229,6 +246,35 @@ onMounted(async () => {
   gap: 12px;
   padding: 12px 0 20px;
 }
+
+.stock-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.stock-icon.buy {
+  background: #e53935;
+}
+.stock-icon.sell {
+  background: #1e6ef4;
+}
+
+.stock-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ede9ff;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .company-img {
   width: 40px;
   height: 40px;

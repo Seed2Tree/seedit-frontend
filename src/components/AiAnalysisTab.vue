@@ -78,7 +78,9 @@
       </section>
 
       <div class="footer-row">
-        <span v-if="createdAt" class="meta">분석 생성: {{ formatDate(createdAt) }}</span>
+        <span v-if="!loading && createdAt" class="meta"
+          >분석 생성: {{ formatDate(createdAt) }}</span
+        >
       </div>
     </template>
   </div>

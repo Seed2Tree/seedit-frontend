@@ -104,8 +104,13 @@
             @click="goDetail(stock)"
           >
             <div>
-              <div class="stock-avatar" :style="{ background: stock.color || '#7C5CFF' }">
-                {{ stock.companyName.slice(0, 2) }}
+              <div :class="['stock-icon']">
+                <img
+                  :src="logoUrl(stock?.ticker)"
+                  class="stock-avatar"
+                  :alt="stock?.companyName?.slice(0, 2)"
+                  @error="(e) => onLogoError(e, stock?.companyName)"
+                />
               </div>
               <div class="stock-info">
                 <div class="stock-name">{{ stock.companyName }}</div>
@@ -154,6 +159,15 @@ const myPortfolio = ref({
   balance: 0,
 })
 
+function logoUrl(ticker) {
+  return `https://file.alphasquare.co.kr/media/images/stock_logo/kr/${ticker}.png`
+}
+
+function onLogoError(e, companyName) {
+  const initials = companyName?.slice(0, 2)
+  e.target.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' rx='12' fill='%23ede9ff'/><text x='50%25' y='50%25' font-family='sans-serif' font-size='13' font-weight='800' fill='%237c5cff' text-anchor='middle' dominant-baseline='central'>${initials}</text></svg>`
+  e.target.onerror = null
+}
 const query = ref('')
 const sortKey = ref('rate') // 'rate' | 'amount'
 const loading = ref(false)
@@ -374,6 +388,34 @@ function formatRate(rate) {
 }
 .stock-row:active {
   transform: scale(0.99);
+}
+
+.stock-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.stock-icon.buy {
+  background: #e53935;
+}
+.stock-icon.sell {
+  background: #1e6ef4;
+}
+
+.stock-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ede9ff;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 /* 한 행 내부 레이아웃: 윗줄(아바타+이름+가격) / 아랫줄(상세) */
