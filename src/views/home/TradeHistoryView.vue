@@ -57,7 +57,7 @@
             <span :class="['lr-tag', t.tradeType === 'SELL' ? 'sell' : 'buy']">
               #{{ t.tradeType === 'SELL' ? '매도' : '매수' }}
             </span>
-            <span class="lr-memo">{{ t.quantity }}주 · {{ won(t.tradePrice) }}원</span>
+            <span class="lr-memo">{{ Math.abs(t.quantity) }}주 · {{ won(t.tradePrice) }}원</span>
           </div>
         </div>
 

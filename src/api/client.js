@@ -21,9 +21,9 @@ client.interceptors.response.use(
   async (err) => {
     const original = err.config
     const status = err.response?.status
+    const AUTH_URLS = ['/auth/login', '/auth/signup', '/auth/refresh']
 
-    // 401이 아니거나, 이미 재시도했거나, refresh 호출 자체면 그냥 실패 처리
-    if (status !== 401 || original._retry || original.url?.includes('/auth/refresh')) {
+    if (status !== 401 || original._retry || AUTH_URLS.some((u) => original.url?.includes(u))) {
       return Promise.reject(err)
     }
 
