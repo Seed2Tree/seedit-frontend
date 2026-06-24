@@ -1,0 +1,53 @@
+# 프론트 리포(React/Vue)에 둘 파일
+# 경로: .github/workflows/deploy.yml
+
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 의존성 설치 + 빌드
+      - name: Install & Build
+        run: |
+          npm ci
+          npm run build
+        # 빌드 결과: Vite=dist/ , CRA=build/  (본인 프로젝트에 맞게 아래 source 수정)
+
+      # 빌드 결과물을 EC2 의 임시 폴더로 전송
+      - name: Copy build to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: 'dist/*' # CRA 면 "build/*"
+          target: '/home/ubuntu/frontend_tmp'
+          strip_components: 1 # dist/ 떼고 내용물만
+
+      # Nginx 가 읽는 폴더로 옮기기 (권한 때문에 /var/www 권장)
+      - name: Deploy to web root
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo rm -rf /var/www/frontend/*
+            sudo mkdir -p /var/www/frontend
+            sudo cp -r /home/ubuntu/frontend_tmp/* /var/www/frontend/
+            rm -rf /home/ubuntu/frontend_tmp
+            sudo systemctl reload nginx
