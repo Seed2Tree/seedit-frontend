@@ -14,7 +14,14 @@
       <!-- 종목 헤더 -->
       <div class="pd-header">
         <div class="pd-container">
-          <div class="stock-avatar">{{ stock.companyName?.slice(0, 2) }}</div>
+          <div :class="['stock-icon']">
+            <img
+              :src="logoUrl(stock?.ticker)"
+              class="stock-avatar"
+              :alt="stock?.companyName?.slice(0, 2)"
+              @error="(e) => onLogoError(e, stock?.companyName)"
+            />
+          </div>
           <div class="head-info">
             <div class="head-name">{{ stock.companyName }}</div>
             <div class="head-sub">{{ stock.ticker }} · {{ stock.market }}</div>
@@ -169,6 +176,15 @@ function mapReasons(type) {
       text: r.reasonText,
     }))
 }
+function logoUrl(ticker) {
+  return `https://file.alphasquare.co.kr/media/images/stock_logo/kr/${ticker}.png`
+}
+
+function onLogoError(e, companyName) {
+  const initials = companyName?.slice(0, 2)
+  e.target.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' rx='12' fill='%23ede9ff'/><text x='50%25' y='50%25' font-family='sans-serif' font-size='13' font-weight='800' fill='%237c5cff' text-anchor='middle' dominant-baseline='central'>${initials}</text></svg>`
+  e.target.onerror = null
+}
 
 async function load() {
   loading.value = true
@@ -252,6 +268,26 @@ function formatDateTime(iso) {
     gap: 12px;
   }
 }
+
+.stock-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.stock-icon.buy {
+  background: #e53935;
+}
+.stock-icon.sell {
+  background: #1e6ef4;
+}
+
 .stock-avatar {
   width: 44px;
   height: 44px;

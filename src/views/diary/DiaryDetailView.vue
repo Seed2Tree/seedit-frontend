@@ -30,7 +30,7 @@
               <img
                 :src="logoUrl(trade.ticker)"
                 class="stock-avatar"
-                :alt="trade.companyName.slice(0, 2)"
+                :alt="trade.companyName?.slice(0, 2)"
                 @error="(e) => onLogoError(e, trade.companyName)"
               />
             </div>
@@ -217,7 +217,7 @@ function logoUrl(ticker) {
 }
 
 function onLogoError(e, companyName) {
-  const initials = companyName.slice(0, 2)
+  const initials = companyName?.slice(0, 2)
   e.target.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' rx='12' fill='%23ede9ff'/><text x='50%25' y='50%25' font-family='sans-serif' font-size='13' font-weight='800' fill='%237c5cff' text-anchor='middle' dominant-baseline='central'>${initials}</text></svg>`
   e.target.onerror = null
 }
