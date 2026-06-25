@@ -66,12 +66,12 @@ const router = createRouter({
           component: () => import('@/views/home/PortfolioDetailView.vue'),
           meta: { header: { title: '보유 종목', backMode: true } },
         },
-        {
-          // F24: 레벨/포인트/미션 (홈에서 진입)
-          path: 'home/garden',
-          name: 'garden',
-          component: () => import('@/views/GardenView.vue'),
-        },
+        // {
+        //   // F24: 레벨/포인트/미션 (홈에서 진입)
+        //   path: 'home/garden',
+        //   name: 'garden',
+        //   component: () => import('@/views/GardenView.vue'),
+        // },
         {
           // F41: 단타 경고 알림
           path: 'home/alerts',

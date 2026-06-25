@@ -93,6 +93,7 @@ import { useRouter } from 'vue-router'
 import { useDiaryStore } from '@/stores/diary'
 import { userApi } from '@/api/user'
 import { diaryApi } from '@/api/diary'
+import { fortunePool } from '@/assets/fortunePool'
 
 const router = useRouter()
 const store = useDiaryStore()
@@ -115,33 +116,23 @@ const todayLabel = computed(() => {
 })
 
 // --- 오늘의 투자 운세 (로컬) ---
-// TODO: AI 운세 엔드포인트 생기면 교체. 지금은 날짜 기반으로 고정 선택해 하루 동안 동일하게 표시.
-const fortunePool = [
-  {
-    emoji: '🌿',
-    title: '관찰의 날',
-    desc: '급한 결정보다 한 발 떨어져 차트를 들여다보면 좋은 날. 관심 종목에 가설을 한 줄씩 메모해두세요.',
-  },
-  {
-    emoji: '🌤️',
-    title: '인내의 날',
-    desc: '오늘은 사고파는 것보다 기다림이 어울려요. 세워둔 가설이 맞는지 천천히 확인해보세요.',
-  },
-  {
-    emoji: '🔥',
-    title: '점검의 날',
-    desc: '보유 종목의 매수 이유를 다시 떠올려볼 시간. 흔들리는 마음을 기록으로 붙잡아두세요.',
-  },
-  {
-    emoji: '💧',
-    title: '비움의 날',
-    desc: '욕심을 한 스푼 덜어내기 좋은 날. 수익이 났다면 일부 익절도 나쁘지 않아요.',
-  },
-]
+function hash(str) {
+  let h = 0
+
+  for (let i = 0; i < str.length; i++) {
+    h = (h << 5) - h + str.charCodeAt(i)
+    h |= 0
+  }
+
+  return Math.abs(h)
+}
+
 const fortune = computed(() => {
   const d = new Date()
   const dayOfYear = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000)
-  return fortunePool[dayOfYear % fortunePool.length]
+  const seed = hash(`${user.value.name} -${dayOfYear}`)
+  const fortune = fortunePool[seed % fortunePool.length]
+  return fortune
 })
 
 // --- 포맷 ---
