@@ -53,14 +53,15 @@
         <p v-if="isPending" class="settle-hint">매도대금은 영업일 +2일 뒤 예수금으로 입금돼요.</p>
       </section>
 
-      <!-- 투자 가설 -->
-      <section v-if="trade.reasonTag || trade.reasonText" class="card">
-        <h2 class="card-title">투자 가설</h2>
-        <span v-if="trade.isVerified" class="verified-badge">✓ 검증된 가설</span>
-        <div v-if="trade.reasonTag" class="reason-tag">
-          {{ tagEmoji[trade.reasonTag] || '✏️' }} {{ tagLabel[trade.reasonTag] || trade.reasonTag }}
+      <!-- 이 매도에서 체결한 가설 -->
+      <section v-if="isSell && verifiedReasons.length" class="card">
+        <h2 class="card-title">이 매도에서 체결한 가설</h2>
+        <div v-for="r in verifiedReasons" :key="r.rid" class="verified-reason">
+          <span class="reason-tag">
+            {{ tagEmoji(r.reasonTag) }} {{ tagLabel(r.reasonTag) }} <em class="check">✓</em>
+          </span>
+          <p v-if="r.reasonText" class="reason-text">{{ r.reasonText }}</p>
         </div>
-        <p v-if="trade.reasonText" class="reason-text">{{ trade.reasonText }}</p>
       </section>
     </div>
   </div>
@@ -70,13 +71,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { tradesApi } from '@/api/trades'
+import { tagLabel, tagEmoji } from '@/constants/reasonTags'
 
 const route = useRoute()
 
 const trade = ref(null)
 const loading = ref(false)
 const error = ref(false)
-
+const verifiedReasons = ref([])
 const isSell = computed(() => trade.value?.tradeType === 'SELL')
 const isPending = computed(() => trade.value?.settlementStatus === 'PENDING')
 
@@ -86,23 +88,6 @@ const dday = computed(() => {
   const diff = new Date(trade.value.settleDate) - new Date()
   return Math.max(0, Math.ceil(diff / 86400000))
 })
-
-const tagLabel = {
-  earnings: '실적 기대',
-  news: '호재 뉴스',
-  long: '장기 투자',
-  rebound: '단기 반등',
-  chart: '차트 패턴',
-  etc: '기타',
-}
-const tagEmoji = {
-  earnings: '📈',
-  news: '📰',
-  long: '🌱',
-  rebound: '⚡',
-  chart: '📊',
-  etc: '✏️',
-}
 
 function won(n) {
   return Number(n ?? 0).toLocaleString('ko-KR')
@@ -121,7 +106,8 @@ async function load() {
   error.value = false
   try {
     const res = await tradesApi.getTradeHistoryById(route.params.tid)
-    trade.value = res.data
+    trade.value = res.data.trade // ← .trade 추가
+    verifiedReasons.value = res.data.verifiedReasons ?? []
   } catch (e) {
     error.value = true
   } finally {
@@ -301,5 +287,17 @@ onMounted(load)
   color: #1f9d55;
   font-size: 13px;
   font-weight: 700;
+}
+.verified-reason {
+  padding: 8px 0;
+}
+.verified-reason + .verified-reason {
+  border-top: 1px solid #f0f0f0;
+}
+.verified-reason .check {
+  font-style: normal;
+  color: #1f9d55;
+  font-weight: 700;
+  margin-left: 4px;
 }
 </style>

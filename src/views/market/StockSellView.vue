@@ -79,7 +79,7 @@
       <div class="origin-reason">
         <div class="reason-title">처음 살 때 이유는</div>
         <template v-if="buyReasons.length">
-          <div v-for="(r, i) in buyReasons" :key="i" class="origin-card">
+          <div v-for="(r, i) in buyReasons" :key="r.rid" class="origin-card">
             <div class="origin-badge">
               <span class="tag-emoji">{{ r.emoji }}</span>
               {{ r.label }}
@@ -143,6 +143,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { tradesApi } from '@/api/trades'
 import BaseToast from '@/components/BaseToast.vue'
+import { BUY_REASON_TAGS as reasonTags } from '@/constants/reasonTags'
+import { SELL_REASON_TAGS as sellReasonTags, tagLabel, tagEmoji } from '@/constants/reasonTags'
 
 const router = useRouter()
 const route = useRoute()
@@ -159,43 +161,15 @@ const selectedTag = ref('')
 const reasonText = ref('')
 const originalReasons = ref([]) // 처음 살 때 이유 (매수 가설)
 
-// 매도 사유 태그 (F05 복기)
-const sellReasonTags = [
-  { value: 'target', label: '목표가 도달', emoji: '🎯' },
-  { value: 'stoploss', label: '손절', emoji: '✂️' },
-  { value: 'bad-news', label: '악재', emoji: '📉' },
-  { value: 'switch', label: '다른 종목으로', emoji: '🔄' },
-]
-// 출력: 코드 → 한글 변환 맵
-const tagLabel = {
-  earnings: '실적 기대',
-  news: '호재 뉴스',
-  long: '장기 투자',
-  rebound: '단기 반등',
-  chart: '차트 패턴',
-  etc: '기타',
-  target: '목표가 도달',
-  stoploss: '손절',
-  'bad-news': '악재',
-  switch: '다른 종목으로',
-}
-// 매수 가설 카테고리 → 표시용 라벨/이모지 (원래 이유 렌더링에 사용)
-// 태그가 한글 라벨로 오니까 라벨 기준 이모지 맵
-const tagEmoji = {
-  '실적 기대': '📈',
-  '호재 뉴스': '📰',
-  '장기 투자': '🌱',
-  '단기 반등': '⚡',
-  '차트 패턴': '📊',
-  기타: '✏️',
-}
 // 매수 가설만 추려서 화면용으로 변환
 const buyReasons = computed(() =>
   originalReasons.value
     .filter((r) => r.reasonType === 'BUY')
     .map((r) => ({
-      label: tagLabel[r.reasonTag] ?? r.reasonTag,
-      emoji: tagEmoji[r.reasonTag] ?? '✏️',
+      rid: r.rid,
+      isVerified: r.isVerified,
+      label: tagLabel(r.reasonTag),
+      emoji: tagEmoji(r.reasonTag),
       date: formatDate(r.reasonDate),
       text: r.reasonText,
     })),

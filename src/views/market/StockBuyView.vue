@@ -109,6 +109,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { tradesApi } from '@/api/trades'
 import BaseToast from '@/components/BaseToast.vue'
+import { BUY_REASON_TAGS as reasonTags } from '@/constants/reasonTags'
 
 const router = useRouter()
 const route = useRoute()
@@ -122,15 +123,6 @@ const balance = ref(0)
 const quantity = ref(0)
 const selectedTag = ref('')
 const reasonText = ref('')
-
-const reasonTags = [
-  { value: 'earnings', label: '실적 기대', emoji: '📈' },
-  { value: 'news', label: '호재 뉴스', emoji: '📰' },
-  { value: 'long', label: '장기 투자', emoji: '🌱' },
-  { value: 'rebound', label: '단기 반등', emoji: '⚡' },
-  { value: 'chart', label: '차트 패턴', emoji: '📊' },
-  { value: 'etc', label: '기타', emoji: '✏️' },
-]
 
 // --- 계산값 ---
 const maxShares = computed(() =>
