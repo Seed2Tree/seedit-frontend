@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import { useHeaderStore } from '@/stores/header'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior() {
+    return { top: 0 }
+  },
   routes: [
     // ── 인증 플로우 (탭바 없음) ──────────────────────────────
     {
@@ -30,7 +32,6 @@ const router = createRouter({
           path: 'signup',
           name: 'signup',
           component: () => import('@/views/SignupView.vue'),
-          meta: { header: { title: '회원가입', backMode: true } },
         },
         {
           path: 'signup/complete',
@@ -95,6 +96,7 @@ const router = createRouter({
           path: 'home/trades/:tid',
           name: 'trade-detail',
           component: () => import('@/views/home/TradeDetailView.vue'),
+          meta: { header: { title: '거래 상세', backMode: true } },
         },
 
         // ── 투자종목 탭 ───────────────────────────────────

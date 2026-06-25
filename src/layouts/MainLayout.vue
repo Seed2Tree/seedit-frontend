@@ -8,19 +8,27 @@
       :is-starred="headerStore.isStarred"
       @star-click="headerStore.onStarClick?.()"
     />
-    <main class="content"><RouterView /></main>
+    <main ref="contentEl" class="content"><RouterView /></main>
     <BottomTabBar v-if="!route.meta.hideTabBar" />
   </div>
 </template>
 
 <script setup>
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import BottomTabBar from '@/components/BottomTabBar.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import { useHeaderStore } from '@/stores/header'
 
 const route = useRoute()
+const contentEl = ref(null)
 const headerStore = useHeaderStore()
+watch(
+  () => route.fullPath,
+  () => {
+    contentEl.value?.scrollTo({ top: 0 })
+  },
+)
 </script>
 
 <style scoped>

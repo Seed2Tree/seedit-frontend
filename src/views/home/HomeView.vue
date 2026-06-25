@@ -1,14 +1,16 @@
 <template>
   <div class="home">
     <!-- 인사 -->
-    <div class="greeting-label">🌱 {{ user.day }}일차 {{ level.levelName || '새싹이' }}</div>
-    <h1 class="greeting-title">오늘도 한 뼘 자라볼까요?</h1>
+    <div class="greeting-label">🌱 {{ user?.day }}일차 {{ level?.levelName }}</div>
+    <h1 class="greeting-title">{{ greeting }}</h1>
 
     <!-- 레벨 카드 -->
     <div class="level-card">
-      <div class="level-mascot">🍊</div>
+      <div class="level-mascot">
+        <img :src="mascotSrc" :alt="level.levelName" class="level-mascot-img" />
+      </div>
       <div class="level-body">
-        <div class="level-tier">Lv. {{ level.level }} · {{ level.levelName || '새싹이' }}</div>
+        <div class="level-tier">Lv. {{ level?.level }} · {{ level?.levelName || '' }}</div>
         <div class="level-msg">잘 자라고 있어요!</div>
         <div class="level-progress">
           <div class="level-track">
@@ -94,6 +96,23 @@ import { useDiaryStore } from '@/stores/diary'
 import { userApi } from '@/api/user'
 import { diaryApi } from '@/api/diary'
 import { fortunePool } from '@/assets/fortunePool'
+import { greetingPool } from '@/assets/greetingPool'
+import lv1 from '@/assets/level/1_씨앗.png'
+import lv2 from '@/assets/level/2_새싹투자자.png'
+import lv3 from '@/assets/level/3_묘목트레이더.png'
+import lv4 from '@/assets/level/4_든든한가지.png'
+import lv5 from '@/assets/level/5_큰나무투자자.png'
+import lv6 from '@/assets/level/6_숲의현자.png'
+
+const mascots = { 1: lv1, 2: lv2, 3: lv3, 4: lv4, 5: lv5, 6: lv6 }
+
+const mascotSrc = computed(() => mascots[level.value.level] || lv1)
+const greeting = computed(() => {
+  const d = new Date()
+  const dayOfYear = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000)
+  const seed = hash(`greeting-${user.value.name}-${dayOfYear}`)
+  return greetingPool[seed % greetingPool.length]
+})
 
 const router = useRouter()
 const store = useDiaryStore()
@@ -289,6 +308,12 @@ onMounted(async () => {
   font-size: 26px;
   flex-shrink: 0;
 }
+.level-mascot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+}
 .level-body {
   flex: 1 0 0;
   min-width: 0;
@@ -339,7 +364,7 @@ onMounted(async () => {
   cursor: pointer;
   transition: transform 0.08s;
 }
-.asset-card:active {
+.asset-card:active:not(:has(.asset-btn:active)) {
   transform: scale(0.99);
 }
 .asset-label {
@@ -387,10 +412,17 @@ onMounted(async () => {
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 .asset-btn.ghost {
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
+}
+.asset-btn.ghost:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+.asset-btn.solid:hover {
+  background: #f1ecff;
 }
 .asset-btn.solid {
   background: #fff;

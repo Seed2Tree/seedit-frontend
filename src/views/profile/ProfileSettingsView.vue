@@ -5,8 +5,7 @@
       <div class="avatar-section">
         <div class="avatar-wrap">
           <div class="avatar">
-            <img v-if="form.avatarUrl" :src="form.avatarUrl" class="avatar-img" alt="" />
-            <Sprout v-else :size="40" color="white" />
+            <img :src="mascotSrc" :alt="level?.levelName" class="level-mascot-img" />
           </div>
         </div>
       </div>
@@ -126,8 +125,13 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Sprout } from 'lucide-vue-next'
 import { userApi } from '@/api/user'
+import lv1 from '@/assets/level/1_씨앗.png'
+import lv2 from '@/assets/level/2_새싹투자자.png'
+import lv3 from '@/assets/level/3_묘목트레이더.png'
+import lv4 from '@/assets/level/4_든든한가지.png'
+import lv5 from '@/assets/level/5_큰나무투자자.png'
+import lv6 from '@/assets/level/6_숲의현자.png'
 
 const router = useRouter()
 const saving = ref(false)
@@ -139,7 +143,11 @@ const birthM = ref('')
 const birthD = ref('')
 const info = ref(null) // 읽기 전용 부가 정보
 const original = ref({ username: '', birth: '' })
+const level = ref('')
 
+const mascots = { 1: lv1, 2: lv2, 3: lv3, 4: lv4, 5: lv5, 6: lv6 }
+
+const mascotSrc = computed(() => mascots[level.value?.level] || lv1)
 onMounted(async () => {
   try {
     const res = await userApi.getMe()
@@ -164,7 +172,7 @@ onMounted(async () => {
       activity: u.activity,
       createdAt: u.createdAt,
     }
-
+    level.value = u.lavel
     original.value = { username: u.username, birth: u.birth ?? '' }
   } catch (e) {
     error.value = '프로필을 불러오지 못했어요.'
@@ -256,7 +264,7 @@ async function onSave() {
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  background: #f4f1ff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -266,6 +274,24 @@ async function onSave() {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.level-mascot {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.level-mascot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
 }
 .form {
   display: flex;

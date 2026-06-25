@@ -1,10 +1,5 @@
 <template>
   <div class="page">
-    <header class="topbar">
-      <button class="back-btn" @click="router.back()">‹</button>
-      <h1 class="topbar-title">거래 상세</h1>
-    </header>
-
     <div v-if="loading" class="state-box">불러오는 중…</div>
     <div v-else-if="error" class="state-box">
       거래 정보를 불러오지 못했어요.
@@ -61,6 +56,7 @@
       <!-- 투자 가설 -->
       <section v-if="trade.reasonTag || trade.reasonText" class="card">
         <h2 class="card-title">투자 가설</h2>
+        <span v-if="trade.isVerified" class="verified-badge">✓ 검증된 가설</span>
         <div v-if="trade.reasonTag" class="reason-tag">
           {{ tagEmoji[trade.reasonTag] || '✏️' }} {{ tagLabel[trade.reasonTag] || trade.reasonTag }}
         </div>
@@ -76,7 +72,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { tradesApi } from '@/api/trades'
 
 const route = useRoute()
-const router = useRouter()
 
 const trade = ref(null)
 const loading = ref(false)
@@ -294,5 +289,17 @@ onMounted(load)
   color: #444;
   margin: 0;
   white-space: pre-wrap;
+}
+/* 검증 완료 배지 */
+.verified-badge {
+  display: inline-block;
+  margin-bottom: 10px;
+  margin-right: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #eaf7ef;
+  color: #1f9d55;
+  font-size: 13px;
+  font-weight: 700;
 }
 </style>

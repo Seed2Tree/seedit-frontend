@@ -86,6 +86,18 @@
               <span v-if="r.date"> · {{ r.date }}</span>
             </div>
             <p class="origin-text">"{{ r.text }}"</p>
+
+            <!-- 추가: 가설 검증 토글 -->
+            <button
+              :class="['verify-btn', { on: verifiedIds.includes(r.rid) }]"
+              @click="toggleVerify(r.rid)"
+            >
+              {{
+                verifiedIds.includes(r.rid)
+                  ? '✓ 이 가설이 맞았어요'
+                  : '이 가설, 결과적으로 맞았나요?'
+              }}
+            </button>
           </div>
         </template>
         <div v-else class="origin-empty">기록된 매수 이유가 없어요.</div>
@@ -188,6 +200,11 @@ const buyReasons = computed(() =>
       text: r.reasonText,
     })),
 )
+const verifiedIds = ref([])
+function toggleVerify(rid) {
+  const i = verifiedIds.value.indexOf(rid)
+  i === -1 ? verifiedIds.value.push(rid) : verifiedIds.value.splice(i, 1)
+}
 
 // --- 계산값 ---
 const maxShares = computed(() => currentQuantity.value) // 보유 수량까지만 매도 가능
@@ -263,6 +280,7 @@ async function onSubmit() {
       tradeType: 'SELL',
       reasonTag: selectedTag.value || null,
       reasonText: reasonText.value || null,
+      verifiedReasonIds: verifiedIds.value,
     }
 
     await tradesApi.sellStock(payload)
@@ -672,5 +690,32 @@ function formatDate(iso) {
 .sell-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+/* 가설 검증 토글 버튼 */
+.verify-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 9px 14px;
+  width: 100%;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid #e4e2ed;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  color: #7a7388;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.verify-btn:active {
+  transform: scale(0.98);
+}
+/* 검증됨(on) 상태 */
+.verify-btn.on {
+  background: #f2eeff;
+  border-color: #7c5cff;
+  color: #7c5cff;
 }
 </style>

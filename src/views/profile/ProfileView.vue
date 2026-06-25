@@ -6,7 +6,9 @@
     <!-- 프로필 대시보드 -->
     <section class="dashboard">
       <div class="profile-row">
-        <div class="avatar"><Sprout :size="28" color="white" /></div>
+        <div class="avatar">
+          <img :src="mascotSrc" :alt="level.levelName" class="level-mascot-img" />
+        </div>
         <div class="profile-meta">
           <span class="badge-day">{{ user.day }}일차 {{ level.levelName }}</span>
           <strong class="name">{{ user.name }} 님</strong>
@@ -19,8 +21,8 @@
       <!-- 레벨 진행 -->
       <div class="level">
         <div class="level-head">
-          <span class="level-text">Lv.{{ level.level }} · {{ level.levelName }}</span>
-          <span class="level-days">{{ level.point }} / {{ nextLevelPoint }} P</span>
+          <span class="level-text">Lv.{{ level.level }} · {{ level.levelName }}</span
+          ><span class="level-days">{{ level.point }} / {{ level.nextLevelPoint }} P</span>
         </div>
         <div class="progress">
           <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
@@ -115,6 +117,12 @@ import { authApi } from '@/api/auth'
 import { userApi } from '@/api/user'
 import { studyApi } from '@/api/study'
 import ConfirmDangerModal from '@/components/ConfirmDangerModal.vue'
+import lv1 from '@/assets/level/1_씨앗.png'
+import lv2 from '@/assets/level/2_새싹투자자.png'
+import lv3 from '@/assets/level/3_묘목트레이더.png'
+import lv4 from '@/assets/level/4_든든한가지.png'
+import lv5 from '@/assets/level/5_큰나무투자자.png'
+import lv6 from '@/assets/level/6_숲의현자.png'
 
 const router = useRouter()
 const appVersion = '1.0.0'
@@ -126,6 +134,8 @@ const withdrawModal = ref(false)
 const user = ref({ name: '', day: 0, balance: 0, totalInvested: 0 })
 const level = ref({ level: 1, levelName: '', point: 0 })
 const stats = ref({ diaryCount: 0, transactionCount: 0, watchlistCount: 0, studyBookmarkCount: 0 })
+const mascots = { 1: lv1, 2: lv2, 3: lv3, 4: lv4, 5: lv5, 6: lv6 }
+const mascotSrc = computed(() => mascots[level.value.level] || lv1)
 
 const progressPercent = computed(() =>
   Math.min(100, Math.round((level.value.point / (level.value.nextLevelPoint || 1)) * 100)),
@@ -256,11 +266,29 @@ onMounted(async () => {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  background: #f4f1ff;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.level-mascot {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.level-mascot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
 }
 .profile-meta {
   flex: 1;

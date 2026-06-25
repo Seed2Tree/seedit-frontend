@@ -3,7 +3,7 @@
     <div class="splash-inner">
       <div class="logo-icon">🌱</div>
       <div class="logo-title">Seedit</div>
-      <div class="logo-sub">모의 투자로 시작하는 첫 투자</div>
+      <div class="logo-sub">하루 5분, 나만의 투자 다이어리</div>
       <div class="spinner" />
     </div>
   </div>

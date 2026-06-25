@@ -1,6 +1,6 @@
 <template>
   <div class="signup">
-    <HeaderBar title="회원가입" />
+    <HeaderBar title="회원가입" back-mode="true" />
 
     <div class="container">
       <h3 class="heading">기본 정보를 알려주세요.</h3>
