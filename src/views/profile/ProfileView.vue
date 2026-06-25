@@ -53,7 +53,7 @@
     <!-- 내가 저장한 글 -->
     <section class="saved">
       <div class="section-head">
-        <h3 class="section-title">내가 저장한 글</h3>
+        <h3 class="section-title">내가 저장한 영상</h3>
         <button class="view-all" @click="onViewAll">전체보기</button>
       </div>
       <div class="saved-scroll">
