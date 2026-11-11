@@ -66,14 +66,15 @@
             :class="[
               'lr-delta',
               t.tradeType === 'SELL' ? 'plus' : 'minus',
-              { pending: isPending(t) },
+              { pending: isPending(t) || isFailed(t) },
             ]"
           >
             {{ t.tradeType === 'SELL' ? '+' : '−' }}{{ won(t.totalAmount) }}원
           </div>
 
           <!-- 정산 예정 매도: 잔액 대신 입금예정일 -->
-          <div v-if="isPending(t)" class="lr-settle">
+          <div v-if="isFailed(t)" class="lr-settle">정산 지연 · 확인 필요</div>
+          <div v-else-if="isPending(t)" class="lr-settle">
             정산예정 · {{ formatMonthDay(t.settleDate) }} 입금
           </div>
           <!-- 매수 / 정산 완료 매도: 거래 후 잔액 -->
@@ -140,6 +141,9 @@ async function load() {
 }
 function isPending(t) {
   return t.tradeType === 'SELL' && t.settlementStatus === 'PENDING'
+}
+function isFailed(t) {
+  return t.tradeType === 'SELL' && t.settlementStatus === 'FAILED'
 }
 function formatMonthDay(d) {
   if (!d) return ''
