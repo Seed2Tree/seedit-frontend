@@ -40,8 +40,8 @@
       <section v-if="isSell && trade.settlementStatus" class="card settle-card">
         <div class="row">
           <span class="label">정산 상태</span>
-          <span :class="['settle-badge', isPending ? 'pending' : 'done']">
-            {{ isPending ? '정산 예정' : '입금 완료' }}
+          <span :class="['settle-badge', isSettled ? 'done' : 'pending']">
+            {{ isFailed ? '정산 지연' : isSettled ? '입금 완료' : '정산 예정' }}
           </span>
         </div>
         <div v-if="isPending" class="row">
@@ -51,6 +51,9 @@
           >
         </div>
         <p v-if="isPending" class="settle-hint">매도대금은 영업일 +2일 뒤 예수금으로 입금돼요.</p>
+        <p v-if="isFailed" class="settle-hint">
+          정산이 지연되어 확인이 필요해요. 매도대금은 아직 입금되지 않았어요.
+        </p>
       </section>
 
       <!-- 이 매도에서 체결한 가설 -->
@@ -81,6 +84,8 @@ const error = ref(false)
 const verifiedReasons = ref([])
 const isSell = computed(() => trade.value?.tradeType === 'SELL')
 const isPending = computed(() => trade.value?.settlementStatus === 'PENDING')
+const isFailed = computed(() => trade.value?.settlementStatus === 'FAILED')
+const isSettled = computed(() => trade.value?.settlementStatus === 'SETTLED')
 
 // 입금 예정일까지 남은 일수(달력 기준 표시용)
 const dday = computed(() => {
